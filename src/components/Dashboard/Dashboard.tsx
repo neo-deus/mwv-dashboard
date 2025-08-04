@@ -1,0 +1,40 @@
+"use client";
+
+import { QueryProvider } from "@/components/providers/QueryProvider";
+import { TimelineSlider } from "@/components/Timeline/TimelineSlider";
+import { MapComponent } from "@/components/Map/MapComponent";
+import { DataSourceSidebar } from "@/components/Sidebar/DataSourceSidebar";
+
+export default function Dashboard() {
+  return (
+    <QueryProvider>
+      <div className="h-screen flex flex-col">
+        {/* Header */}
+        <header className="border-b bg-background p-3 shrink-0">
+          <h1 className="text-xl font-bold">MWV Weather Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Interactive weather data visualization with polygon analysis
+          </p>
+        </header>
+
+        {/* Timeline Slider */}
+        <div className="border-b bg-background p-3 shrink-0">
+          <TimelineSlider />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex min-h-0">
+          {/* Map Area */}
+          <div className="flex-1 relative min-h-0">
+            <MapComponent />
+          </div>
+
+          {/* Sidebar */}
+          <div className="w-80 border-l bg-background shrink-0">
+            <DataSourceSidebar />
+          </div>
+        </div>
+      </div>
+    </QueryProvider>
+  );
+}
