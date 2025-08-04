@@ -5,9 +5,8 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import MapControls2 from "./MapControls2";
 import { GeomanControl } from "./GeomanControl";
-import { GeomanPolygonHandler } from "./GeomanPolygonHandler";
-import { PolygonManager } from "./PolygonManager";
-import { BasicPolygonDrawing } from "./BasicPolygonDrawing";
+import { GeomanController } from "./GeomanController";
+import { PolygonRenderer } from "./PolygonRenderer";
 
 export default function MapComponentInner() {
   const { map, setMapCenter, setMapZoom } = useDashboardStore();
@@ -77,14 +76,14 @@ export default function MapComponentInner() {
         {/* Geoman Control (Polygon Only) */}
         <GeomanControl position="topright" />
 
-        {/* Geoman Polygon Event Handler */}
-        <GeomanPolygonHandler />
+        {/* NEW: Geoman Controller for handling events */}
+        <GeomanController />
 
         {/* Map Controls */}
         <MapControls2 />
 
-        {/* Polygon Manager */}
-        <PolygonManager mapRef={mapRef} />
+        {/* Polygon Renderer - restores polygons from store on page load */}
+        <PolygonRenderer />
       </MapContainer>
     </div>
   );

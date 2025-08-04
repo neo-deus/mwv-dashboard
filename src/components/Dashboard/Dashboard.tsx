@@ -4,6 +4,7 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { TimelineSlider } from "@/components/Timeline/TimelineSlider";
 import { MapComponent } from "@/components/Map/MapComponent";
 import { DataSourceSidebar } from "@/components/Sidebar/DataSourceSidebar";
+import { Map } from "../Map/Map";
 
 export default function Dashboard() {
   return (
@@ -27,6 +28,7 @@ export default function Dashboard() {
           {/* Map Area */}
           <div className="flex-1 relative min-h-0">
             <MapComponent />
+            {/* <Map /> */}
           </div>
 
           {/* Sidebar */}

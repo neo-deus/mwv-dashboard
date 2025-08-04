@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDashboardStore } from "@/stores/dashboardStore";
-import { Trash2, MapPin, Eye } from "lucide-react";
+import { Trash2, MapPin, Eye, Edit3 } from "lucide-react";
 import { formatDisplayDate } from "@/utils/helpers";
 
 export function PolygonList() {
@@ -13,6 +13,8 @@ export function PolygonList() {
     selectedPolygon,
     setSelectedPolygon,
     dataSources,
+    editingPolygon,
+    setEditingPolygon,
   } = useDashboardStore();
 
   const getDataSourceName = (id: string) => {
@@ -86,6 +88,23 @@ export function PolygonList() {
 
             {/* Actions */}
             <div className="flex flex-col gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingPolygon(
+                    editingPolygon === polygon.id ? undefined : polygon.id
+                  );
+                }}
+                className={`h-6 w-6 p-0 ${
+                  editingPolygon === polygon.id
+                    ? "text-blue-600 bg-blue-50 hover:bg-blue-100"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Edit3 className="h-3 w-3" />
+              </Button>
               <Button
                 size="sm"
                 variant="ghost"

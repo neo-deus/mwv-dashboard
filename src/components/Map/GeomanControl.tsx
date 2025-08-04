@@ -34,10 +34,10 @@ const Geoman = L.Control.extend({
       drawRectangle: false,
       drawCircle: false,
       drawText: false,
-      editMode: true,
+      editMode: false, // Remove edit mode tool
       dragMode: false,
       cutPolygon: false,
-      removalMode: true,
+      removalMode: false, // Remove removal mode tool
       rotateMode: false,
       oneBlock: true,
     });

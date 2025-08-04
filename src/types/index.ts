@@ -52,4 +52,5 @@ export interface DashboardState {
   map: MapState;
   isDrawing: boolean;
   selectedPolygon?: string;
+  editingPolygon?: string; // ID of polygon currently being edited
 }

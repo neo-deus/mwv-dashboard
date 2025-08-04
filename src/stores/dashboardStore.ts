@@ -15,10 +15,11 @@ interface DashboardStore extends DashboardState {
   setTimeRange: (start: Date, end: Date) => void;
 
   // Polygon actions
-  addPolygon: (polygon: Omit<Polygon, "id" | "createdAt">) => void;
+  addPolygon: (polygon: Omit<Polygon, "id" | "createdAt">) => Polygon;
   removePolygon: (id: string) => void;
   updatePolygon: (id: string, updates: Partial<Polygon>) => void;
   setSelectedPolygon: (id?: string) => void;
+  setEditingPolygon: (id?: string) => void;
 
   // Data source actions
   addDataSource: (dataSource: Omit<DataSource, "id">) => void;
@@ -65,6 +66,7 @@ const initialState: DashboardState = {
   timeline: defaultTimelineState,
   map: defaultMapState,
   isDrawing: false,
+  editingPolygon: undefined,
 };
 
 export const useDashboardStore = create<DashboardStore>()(
@@ -90,18 +92,19 @@ export const useDashboardStore = create<DashboardStore>()(
           })),
 
         // Polygon actions
-        addPolygon: (polygon) =>
-          set((state) => ({
-            polygons: [
-              ...state.polygons,
-              {
-                ...polygon,
-                id: crypto.randomUUID(),
-                createdAt: new Date(),
-              },
-            ],
-          })),
+        addPolygon: (polygon: Omit<Polygon, "id" | "createdAt">) => {
+          const newPolygon = {
+            ...polygon,
+            id: crypto.randomUUID(),
+            createdAt: new Date(),
+          };
 
+          set((state) => ({
+            polygons: [...state.polygons, newPolygon],
+          }));
+
+          return newPolygon;
+        },
         removePolygon: (id) =>
           set((state) => ({
             polygons: state.polygons.filter((p) => p.id !== id),
@@ -119,6 +122,11 @@ export const useDashboardStore = create<DashboardStore>()(
         setSelectedPolygon: (id) =>
           set(() => ({
             selectedPolygon: id,
+          })),
+
+        setEditingPolygon: (id) =>
+          set(() => ({
+            editingPolygon: id,
           })),
 
         // Data source actions
