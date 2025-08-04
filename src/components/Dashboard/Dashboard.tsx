@@ -5,7 +5,6 @@ import { TimelineSlider } from "@/components/Timeline/TimelineSlider";
 import { MapComponent } from "@/components/Map/MapComponent";
 import { DataSourceSidebar } from "@/components/Sidebar/DataSourceSidebar";
 import { MigrationHelper } from "@/components/MigrationHelper";
-import { Map } from "../Map/Map";
 
 export default function Dashboard() {
   return (

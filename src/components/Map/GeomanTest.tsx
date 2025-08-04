@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useMap } from "react-leaflet";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyWindow = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyMap = any;
+
 export function GeomanTest() {
   const map = useMap();
   const [geomanStatus, setGeomanStatus] = useState("loading");
@@ -14,8 +19,8 @@ export function GeomanTest() {
 
         // Ensure Leaflet is available
         const leafletModule = await import("leaflet");
-        if (!window.L) {
-          window.L = leafletModule.default;
+        if (!(window as AnyWindow).L) {
+          (window as AnyWindow).L = leafletModule.default;
         }
 
         // Try to import Geoman
@@ -24,19 +29,21 @@ export function GeomanTest() {
         console.log("Geoman imported successfully");
         console.log("Map object:", map);
         console.log("Map constructor:", map.constructor.name);
-        console.log("Leaflet version:", window.L?.version);
+        console.log("Leaflet version:", (window as AnyWindow).L?.version);
         console.log(
           "L.Map.prototype has pm:",
-          !!(window.L?.Map.prototype as any)?.pm
+          !!((window as AnyWindow).L?.Map.prototype as AnyMap)?.pm
         );
 
         // Check if pm is attached
         setTimeout(() => {
-          if (map.pm) {
-            console.log("map.pm is available:", map.pm);
+          if ((map as AnyMap).pm) {
+            console.log("map.pm is available:", (map as AnyMap).pm);
             console.log(
               "map.pm methods:",
-              Object.getOwnPropertyNames(Object.getPrototypeOf(map.pm))
+              Object.getOwnPropertyNames(
+                Object.getPrototypeOf((map as AnyMap).pm)
+              )
             );
             setGeomanStatus("available");
           } else {
@@ -47,11 +54,16 @@ export function GeomanTest() {
             );
 
             // Try manual initialization
-            if (window.L && (window.L.Map.prototype as any).pm) {
+            if (
+              (window as AnyWindow).L &&
+              ((window as AnyWindow).L.Map.prototype as AnyMap).pm
+            ) {
               try {
                 console.log("Attempting manual PM initialization...");
-                (map as any).pm = new (window.L as any).PM(map);
-                if (map.pm) {
+                (map as AnyMap).pm = new ((window as AnyWindow).L as AnyMap).PM(
+                  map
+                );
+                if ((map as AnyMap).pm) {
                   console.log("Manual PM initialization successful!");
                   setGeomanStatus("manually initialized");
                 } else {
@@ -79,9 +91,9 @@ export function GeomanTest() {
 
   const testDraw = () => {
     console.log("Testing draw functionality...");
-    if (map.pm) {
+    if ((map as AnyMap).pm) {
       try {
-        map.pm.enableDraw("Polygon");
+        (map as AnyMap).pm.enableDraw("Polygon");
         console.log("Draw enabled successfully");
       } catch (error) {
         console.error("Draw failed:", error);

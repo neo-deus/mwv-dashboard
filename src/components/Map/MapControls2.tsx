@@ -3,20 +3,16 @@
 import { useMap } from "react-leaflet";
 import { Button } from "@/components/ui/button";
 import { useDashboardStore } from "@/stores/dashboardStore";
-import { Home, Square } from "lucide-react";
+import { Home } from "lucide-react";
 
 export default function MapControls() {
   const map = useMap();
-  const { isDrawing, setIsDrawing } = useDashboardStore();
+  const { setIsDrawing } = useDashboardStore();
 
   const handleCenterReset = () => {
     const defaultCenter: [number, number] = [52.52, 13.41]; // Berlin
     const defaultZoom = 10;
     map.setView(defaultCenter, defaultZoom);
-  };
-
-  const handleDrawToggle = () => {
-    setIsDrawing(!isDrawing);
   };
 
   return (

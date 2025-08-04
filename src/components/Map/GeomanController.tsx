@@ -9,6 +9,26 @@ import {
 } from "@/services/polygonWeatherService";
 import * as L from "leaflet";
 
+// Type definitions for Geoman events
+interface GeomanCreateEvent {
+  layer: L.Layer;
+  shape: string;
+}
+
+interface GeomanEditEvent {
+  layer: L.Layer;
+}
+
+interface GeomanRemoveEvent {
+  layer: L.Layer;
+}
+
+// Extended layer interface for our custom properties
+interface ExtendedLayer extends L.Layer {
+  _polygonId?: string;
+  isCustomPolygon?: boolean;
+}
+
 export function GeomanController() {
   const map = useMap();
   const {
@@ -22,19 +42,21 @@ export function GeomanController() {
   } = useDashboardStore();
 
   useEffect(() => {
-    if (!map || !map.pm) return;
+    if (!map || !(map as L.Map & { pm?: unknown }).pm) return;
 
     // console.log("GeomanController: Setting up controls and events");
 
     // Add Geoman controls to the map (this might conflict with existing controls)
     // We'll configure them to work with our existing setup
-    map.pm.setGlobalOptions({
+    (
+      map as L.Map & { pm: { setGlobalOptions: (options: unknown) => void } }
+    ).pm.setGlobalOptions({
       pinning: true,
       snappable: true,
     });
 
     // --- Event Listener for CREATING Polygons ---
-    const handleCreate = (e: any) => {
+    const handleCreate = (e: GeomanCreateEvent) => {
       console.log("🔥 GeomanController: pm:create event", e);
       const { layer } = e;
 
@@ -82,8 +104,8 @@ export function GeomanController() {
         });
 
         // 5. CRITICAL: Store the polygon ID in the layer so we can track it
-        (layer as any)._polygonId = newPolygon.id;
-        (layer as any).isCustomPolygon = true;
+        (layer as ExtendedLayer)._polygonId = newPolygon.id;
+        (layer as ExtendedLayer).isCustomPolygon = true;
 
         // 6. Apply temporary styling while fetching weather data
         layer.setStyle({
@@ -175,12 +197,15 @@ export function GeomanController() {
     };
 
     // --- Event Listener for EDITING Polygons ---
-    const handleEdit = (e: any) => {
+    const handleEdit = (e: GeomanEditEvent) => {
       console.log("🔥 GeomanController: pm:edit event", e);
       const { layer } = e;
 
-      if (layer instanceof L.Polygon && (layer as any).isCustomPolygon) {
-        const polygonId = (layer as any)._polygonId;
+      if (
+        layer instanceof L.Polygon &&
+        (layer as ExtendedLayer).isCustomPolygon
+      ) {
+        const polygonId = (layer as ExtendedLayer)._polygonId;
         if (!polygonId) {
           console.warn("No polygon ID found on edited layer");
           return;
@@ -227,12 +252,15 @@ export function GeomanController() {
     };
 
     // --- Event Listener for REMOVING Polygons ---
-    const handleRemove = (e: any) => {
+    const handleRemove = (e: GeomanRemoveEvent) => {
       console.log("🔥 GeomanController: pm:remove event", e);
       const { layer } = e;
 
-      if (layer instanceof L.Polygon && (layer as any).isCustomPolygon) {
-        const polygonId = (layer as any)._polygonId;
+      if (
+        layer instanceof L.Polygon &&
+        (layer as ExtendedLayer).isCustomPolygon
+      ) {
+        const polygonId = (layer as ExtendedLayer)._polygonId;
         if (polygonId) {
           console.log(`Polygon ${polygonId} removed via Geoman`);
           // Update our store to remove the polygon
@@ -248,15 +276,10 @@ export function GeomanController() {
     };
 
     // Listen to multiple edit-related events
-    const handleVertexDrag = (e: any) => {
-      console.log("🔥 GeomanController: vertex drag event", e);
-      // This fires during dragging - we might want to handle the end event instead
-    };
-
-    const handleMarkerdragend = (e: any) => {
+    const handleMarkerdragend = (e: L.LeafletEvent) => {
       console.log("🔥 GeomanController: pm:markerdragend event", e);
       // This should fire when vertex dragging ends
-      handleEdit(e);
+      handleEdit(e as GeomanEditEvent);
     };
 
     // Add all event listeners
@@ -266,8 +289,12 @@ export function GeomanController() {
     map.on("pm:markerdragend", handleMarkerdragend);
 
     // Additional events that might be useful
-    map.on("pm:editstart", (e: any) => console.log("🔥 Edit started", e));
-    map.on("pm:editend", (e: any) => console.log("🔥 Edit ended", e));
+    map.on("pm:editstart", (e: L.LeafletEvent) =>
+      console.log("🔥 Edit started", e)
+    );
+    map.on("pm:editend", (e: L.LeafletEvent) =>
+      console.log("🔥 Edit ended", e)
+    );
 
     // console.log("GeomanController: All event listeners registered");
 
@@ -281,20 +308,28 @@ export function GeomanController() {
       map.off("pm:editstart");
       map.off("pm:editend");
     };
-  }, [map, addPolygon, updatePolygon, polygons, dataSources, timeline]);
+  }, [
+    map,
+    addPolygon,
+    updatePolygon,
+    polygons,
+    dataSources,
+    timeline,
+    activeDataSourceId,
+  ]);
 
   // Separate effect to handle editing state changes
   useEffect(() => {
     if (!map) return;
 
     // Enable/disable editing for all polygon layers based on editingPolygon state
-    map.eachLayer((layer: any) => {
+    map.eachLayer((layer: L.Layer) => {
       if (
         layer instanceof L.Polygon &&
-        (layer as any)._polygonId &&
-        (layer as any).isCustomPolygon
+        (layer as ExtendedLayer)._polygonId &&
+        (layer as ExtendedLayer).isCustomPolygon
       ) {
-        const polygonId = (layer as any)._polygonId;
+        const polygonId = (layer as ExtendedLayer)._polygonId;
 
         if (editingPolygon === polygonId) {
           // console.log(`Enabling editing for polygon ${polygonId}`);

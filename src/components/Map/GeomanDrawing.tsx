@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { useMap, useMapEvents } from "react-leaflet";
+import { useMap } from "react-leaflet";
 import { useDashboardStore } from "@/stores/dashboardStore";
+import * as L from "leaflet";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyWindow = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyMap = any;
 
 export function GeomanDrawing() {
   const map = useMap();
@@ -15,12 +21,12 @@ export function GeomanDrawing() {
         const L = await import("leaflet");
 
         // Ensure Leaflet is available globally
-        if (!window.L) {
-          window.L = L.default;
+        if (!(window as AnyWindow).L) {
+          (window as AnyWindow).L = L.default;
         }
 
         // Import Geoman after Leaflet is ready
-        const geomanModule = await import("@geoman-io/leaflet-geoman-free");
+        await import("@geoman-io/leaflet-geoman-free");
 
         // Wait for everything to be ready
         await new Promise((resolve) => setTimeout(resolve, 200));
@@ -29,30 +35,35 @@ export function GeomanDrawing() {
         console.log("Checking Geoman attachment...");
         console.log(
           "L.Map.prototype.pm exists:",
-          !!(window.L?.Map.prototype as any)?.pm
+          !!((window as AnyWindow).L?.Map.prototype as AnyMap)?.pm
         );
         console.log("map instance type:", map.constructor.name);
-        console.log("map is instance of L.Map:", map instanceof window.L.Map);
+        console.log(
+          "map is instance of L.Map:",
+          map instanceof (window as AnyWindow).L.Map
+        );
 
         // If Geoman didn't auto-attach, we need to manually extend this map
-        if (!map.pm) {
+        if (!(map as AnyMap).pm) {
           console.log("Geoman not auto-attached, attempting manual setup...");
 
           // Check if the PM constructor is available
-          if (window.L && (window.L as any).PM) {
+          if ((window as AnyWindow).L && (window as AnyWindow).L.PM) {
             try {
               // Manually create PM instance for this map
-              const pmInstance = new (window.L as any).PM(map);
-              (map as any).pm = pmInstance;
+              const pmInstance = new (window as AnyWindow).L.PM(map);
+              (map as AnyMap).pm = pmInstance;
               console.log("Manual PM attachment successful");
             } catch (error) {
               console.error("Manual PM attachment failed:", error);
 
               // Try alternative approach - call the extension function directly
-              if ((window.L.Map.prototype as any).pm) {
+              if (((window as AnyWindow).L.Map.prototype as AnyMap).pm) {
                 console.log("Trying to call pm initialization function...");
                 try {
-                  (window.L.Map.prototype as any).pm.call(map);
+                  ((window as AnyWindow).L.Map.prototype as AnyMap).pm.call(
+                    map
+                  );
                   console.log("PM function call successful");
                 } catch (e) {
                   console.error("PM function call failed:", e);
@@ -67,7 +78,7 @@ export function GeomanDrawing() {
         }
 
         // Final check
-        if (!map.pm) {
+        if (!(map as AnyMap).pm) {
           console.error("Geoman did not attach to map after all attempts");
           return;
         }
@@ -75,7 +86,7 @@ export function GeomanDrawing() {
         console.log("Geoman successfully attached to map");
 
         // Add controls
-        map.pm.addControls({
+        (map as AnyMap).pm.addControls({
           position: "topleft",
           drawCircle: false,
           drawCircleMarker: false,
@@ -90,9 +101,9 @@ export function GeomanDrawing() {
 
         // Hide the default controls since we have custom ones
         try {
-          const controls = (map.pm as any).getControls?.();
+          const controls = ((map as AnyMap).pm as AnyMap).getControls?.();
           if (controls) {
-            controls.forEach((control: any) => {
+            controls.forEach((control: { _container?: HTMLElement }) => {
               if (control._container) {
                 control._container.style.display = "none";
               }
@@ -103,22 +114,31 @@ export function GeomanDrawing() {
         }
 
         // Listen for polygon creation
-        map.on("pm:create", (e: any) => {
-          console.log("Polygon created:", e);
+        (map as AnyMap).on(
+          "pm:create",
+          (e: {
+            layer: L.Layer & { getLatLngs(): L.LatLng[][] };
+            shape: string;
+          }) => {
+            console.log("Polygon created:", e);
 
-          if (e.shape === "Polygon") {
-            const coordinates = e.layer
-              .getLatLngs()[0]
-              .map((latLng: any) => [latLng.lat, latLng.lng]);
+            if (e.shape === "Polygon") {
+              const coordinates = e.layer
+                .getLatLngs()[0]
+                .map(
+                  (latLng: L.LatLng) =>
+                    [latLng.lat, latLng.lng] as [number, number]
+                );
 
-            addPolygon({
-              name: `Polygon ${Date.now()}`,
-              coordinates,
-              dataSource: "temperature",
-              color: "#3b82f6",
-            });
+              addPolygon({
+                name: `Polygon ${Date.now()}`,
+                coordinates,
+                dataSource: "temperature",
+                color: "#3b82f6",
+              });
+            }
           }
-        });
+        );
 
         console.log("Geoman event listeners attached");
       } catch (error) {
@@ -132,8 +152,8 @@ export function GeomanDrawing() {
     return () => {
       clearTimeout(timer);
       // Clean up event listeners
-      if (map.pm) {
-        map.off("pm:create");
+      if ((map as AnyMap).pm) {
+        (map as AnyMap).off("pm:create");
       }
     };
   }, [map, addPolygon]);

@@ -5,6 +5,15 @@ import { useMap } from "react-leaflet";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import * as L from "leaflet";
 
+interface ExtendedLayer extends L.Layer {
+  _polygonId?: string;
+}
+
+interface GeomanEditEvent {
+  layer?: L.Layer;
+  layers?: L.Layer[];
+}
+
 export function GeomanPolygonHandler() {
   const map = useMap();
   const { updatePolygon, polygons } = useDashboardStore();
@@ -15,15 +24,17 @@ export function GeomanPolygonHandler() {
     // NOTE: Polygon creation is now handled by PolygonManager.tsx to avoid duplicates
     // This component only handles editing events
 
-    const handlePolygonEdit = (e: any) => {
+    const handlePolygonEdit = (e: GeomanEditEvent) => {
       console.log("Polygon edit event:", e);
 
       // Handle both single layer edit and bulk edit
-      const layers = e.layers || [e.layer];
+      const layers = e.layers || (e.layer ? [e.layer] : []);
 
-      layers.forEach((layer: any) => {
+      layers.forEach((layer: L.Layer) => {
         if (layer instanceof L.Polygon) {
-          const coordinates = layer.getLatLngs()[0] as L.LatLng[];
+          const coordinates = (
+            layer as L.Polygon
+          ).getLatLngs()[0] as L.LatLng[];
           const pointCount = coordinates.length;
 
           console.log(`Polygon edited with ${pointCount} points`);
@@ -37,21 +48,21 @@ export function GeomanPolygonHandler() {
             );
 
             // Revert changes by finding original polygon
-            const polygonId = (layer as any)._polygonId;
+            const polygonId = (layer as ExtendedLayer)._polygonId;
             if (polygonId) {
               const originalPolygon = polygons.find((p) => p.id === polygonId);
               if (originalPolygon) {
                 const latLngs = originalPolygon.coordinates.map((coord) =>
                   L.latLng(coord[0], coord[1])
                 );
-                layer.setLatLngs(latLngs);
+                (layer as L.Polygon).setLatLngs(latLngs);
               }
             }
             return;
           }
 
           // Find the polygon ID associated with this layer
-          const polygonId = (layer as any)._polygonId;
+          const polygonId = (layer as ExtendedLayer)._polygonId;
 
           if (polygonId) {
             // Convert L.LatLng[] to [number, number][]

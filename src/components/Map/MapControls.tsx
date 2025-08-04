@@ -6,7 +6,7 @@ import { useDashboardStore } from "@/stores/dashboardStore";
 import { Home, Square } from "lucide-react";
 
 interface MapControlsProps {
-  mapRef: React.RefObject<any>;
+  mapRef: React.RefObject<L.Map | null>;
 }
 
 export function MapControls({ mapRef }: MapControlsProps) {
@@ -61,7 +61,7 @@ export function MapControls({ mapRef }: MapControlsProps) {
           // Wait for the map to be fully initialized
           const checkMapReady = () => {
             return new Promise<void>((resolve) => {
-              if (map._loaded && map.pm) {
+              if ((map as any)._loaded && (map as any).pm) {
                 resolve();
               } else {
                 setTimeout(() => {
@@ -74,8 +74,8 @@ export function MapControls({ mapRef }: MapControlsProps) {
           await checkMapReady();
 
           // Now safely initialize Geoman controls
-          if (map.pm && !map.pm._controlsAdded) {
-            map.pm.addControls({
+          if ((map as any).pm && !(map as any).pm._controlsAdded) {
+            (map as any).pm.addControls({
               position: "topleft",
               drawCircle: false,
               drawCircleMarker: false,
@@ -89,10 +89,10 @@ export function MapControls({ mapRef }: MapControlsProps) {
             });
 
             // Mark controls as added to avoid duplicate initialization
-            map.pm._controlsAdded = true;
+            (map as any).pm._controlsAdded = true;
 
             // Hide default controls, we'll use our custom ones
-            map.pm.getControls().forEach((control: any) => {
+            (map as any).pm.getControls().forEach((control: any) => {
               if (control._container) {
                 control._container.style.display = "none";
               }

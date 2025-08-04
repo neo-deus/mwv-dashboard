@@ -3,9 +3,17 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import { useDashboardStore } from "@/stores/dashboardStore";
+import * as L from "leaflet";
+
+// Type augmentation for map with custom properties
+interface ExtendedMap extends L.Map {
+  _basicDrawingSetup?: boolean;
+  _startPolygonDrawing?: () => void;
+  _stopPolygonDrawing?: () => void;
+}
 
 export function BasicPolygonDrawing() {
-  const map = useMap();
+  const map = useMap() as ExtendedMap;
   const { addPolygon, isDrawing, setIsDrawing } = useDashboardStore();
 
   useEffect(() => {
@@ -13,16 +21,16 @@ export function BasicPolygonDrawing() {
       try {
         const L = await import("leaflet");
 
-        if (!(map as any)._basicDrawingSetup) {
+        if (!map._basicDrawingSetup) {
           console.log("Setting up basic polygon drawing...");
 
           let isCurrentlyDrawing = false;
-          let currentPolygon: any = null;
+          let currentPolygon: L.Polygon | L.Polyline | null = null;
           let currentPoints: [number, number][] = [];
 
           // Store drawing state on map instance
-          (map as any)._basicDrawingSetup = true;
-          (map as any)._startPolygonDrawing = () => {
+          map._basicDrawingSetup = true;
+          map._startPolygonDrawing = () => {
             if (isCurrentlyDrawing) return;
 
             isCurrentlyDrawing = true;
@@ -32,7 +40,7 @@ export function BasicPolygonDrawing() {
             console.log("Polygon drawing started");
           };
 
-          (map as any)._stopPolygonDrawing = () => {
+          map._stopPolygonDrawing = () => {
             if (!isCurrentlyDrawing) return;
 
             isCurrentlyDrawing = false;
@@ -60,7 +68,7 @@ export function BasicPolygonDrawing() {
           };
 
           // Handle map clicks for drawing
-          map.on("click", (e: any) => {
+          map.on("click", (e: L.LeafletMouseEvent) => {
             if (!isCurrentlyDrawing) return;
 
             const point: [number, number] = [e.latlng.lat, e.latlng.lng];
@@ -96,11 +104,11 @@ export function BasicPolygonDrawing() {
           });
 
           // Handle double-click to finish polygon
-          map.on("dblclick", (e: any) => {
+          map.on("dblclick", (e: L.LeafletMouseEvent) => {
             if (!isCurrentlyDrawing) return;
 
             e.originalEvent.preventDefault();
-            (map as any)._stopPolygonDrawing();
+            map._stopPolygonDrawing?.();
           });
 
           console.log("Basic polygon drawing setup complete");
@@ -115,11 +123,11 @@ export function BasicPolygonDrawing() {
 
   // React to drawing state changes
   useEffect(() => {
-    if (map && (map as any)._basicDrawingSetup) {
+    if (map && map._basicDrawingSetup) {
       if (isDrawing) {
-        (map as any)._startPolygonDrawing();
+        map._startPolygonDrawing?.();
       } else {
-        (map as any)._stopPolygonDrawing();
+        map._stopPolygonDrawing?.();
       }
     }
   }, [isDrawing, map]);
