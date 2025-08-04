@@ -158,15 +158,18 @@ export const useDashboardStore = create<DashboardStore>()(
             }
 
             const updatedPolygons = state.polygons.map((polygon) => {
-              if (
-                polygon.dataSource === state.activeDataSourceId &&
-                polygon.timeSeriesData
-              ) {
-                return updatePolygonColorForTime(
+              // Update ALL polygons with time series data, regardless of their original data source
+              if (polygon.timeSeriesData) {
+                const updatedPolygon = updatePolygonColorForTime(
                   polygon,
                   targetTime,
                   activeDataSource
                 );
+                // Also update the polygon's dataSource to match the active one
+                return {
+                  ...updatedPolygon,
+                  dataSource: state.activeDataSourceId,
+                };
               }
               return polygon;
             });

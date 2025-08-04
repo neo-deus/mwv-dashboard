@@ -268,42 +268,62 @@ export function getWeatherValueAtTime(
 
   const targetTime = targetTimestamp.getTime();
 
-  // Find the closest data point to the target timestamp
-  let closestDataPoint = polygon.timeSeriesData.data[0];
-  let minTimeDiff = Math.abs(
-    new Date(closestDataPoint.timestamp).getTime() - targetTime
-  );
+  // Find the closest data point to the target timestamp that has valid data
+  let closestDataPoint = null;
+  let minTimeDiff = Infinity;
 
   for (const dataPoint of polygon.timeSeriesData.data) {
+    // Skip data points with null/undefined values
+    const hasValidTemperature = dataPoint.temperature != null;
+    const hasValidWindSpeed = dataPoint.windSpeed != null;
+
+    // Skip if the requested data type is not available
+    if (dataSource.id === "temperature" && !hasValidTemperature) {
+      continue;
+    }
+    if (dataSource.id === "windspeed" && !hasValidWindSpeed) {
+      continue;
+    }
+
     const timeDiff = Math.abs(
       new Date(dataPoint.timestamp).getTime() - targetTime
     );
+
     if (timeDiff < minTimeDiff) {
       minTimeDiff = timeDiff;
       closestDataPoint = dataPoint;
     }
   }
 
-  console.log(`🎯 Closest data point:`, {
+  if (!closestDataPoint) {
+    console.log(`❌ No valid data points found for ${dataSource.id}`);
+    return null;
+  }
+
+  console.log(`🎯 Closest valid data point:`, {
     timestamp: closestDataPoint.timestamp,
     temperature: closestDataPoint.temperature,
     windSpeed: closestDataPoint.windSpeed,
     timeDiff: minTimeDiff / (60 * 1000), // in minutes
   });
 
-  // Only return value if the closest point is within 1 hour of target
-  if (minTimeDiff <= 60 * 60 * 1000) {
-    // 1 hour in milliseconds
+  // Only return value if the closest point is within 2 hours of target (increased tolerance)
+  if (minTimeDiff <= 2 * 60 * 60 * 1000) {
+    // 2 hours in milliseconds
     if (dataSource.id === "temperature") {
       console.log(`🌡️ Returning temperature: ${closestDataPoint.temperature}`);
       return closestDataPoint.temperature;
     } else if (dataSource.id === "windspeed") {
       console.log(`💨 Returning wind speed: ${closestDataPoint.windSpeed}`);
+      console.log(`💨 Wind speed type: ${typeof closestDataPoint.windSpeed}`);
+      console.log(
+        `💨 Wind speed is null/undefined: ${closestDataPoint.windSpeed == null}`
+      );
       return closestDataPoint.windSpeed;
     }
   } else {
     console.log(
-      `⏰ Data point too far from target time: ${
+      `⏰ Closest valid data point too far from target time: ${
         minTimeDiff / (60 * 1000)
       } minutes`
     );

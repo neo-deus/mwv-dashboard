@@ -34,8 +34,17 @@ export function DataSourceSidebar() {
     console.log(
       `🔄 Active data source changed, refreshing polygon colors for: ${activeDataSourceId}`
     );
+
+    // Update colors based on timeline and new data source
     if (timeline.selectedTime) {
+      console.log(
+        `🎨 Updating polygon colors for timeline: ${timeline.selectedTime.toISOString()}`
+      );
       updatePolygonColorsForTime(timeline.selectedTime);
+    } else {
+      console.log(`⏰ No timeline selected, using current time`);
+      // If no timeline is selected, use current time
+      updatePolygonColorsForTime(new Date());
     }
   }, [activeDataSourceId, timeline.selectedTime, updatePolygonColorsForTime]);
 
