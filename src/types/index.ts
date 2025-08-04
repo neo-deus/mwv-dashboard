@@ -7,6 +7,19 @@ export interface Polygon {
   dataSource: string;
   color: string;
   createdAt: Date | string; // Allow both Date objects and date strings (for persistence)
+  weatherData?: {
+    temperature: number;
+    timestamp: string;
+    centroid: [number, number]; // Store the centroid used for weather fetch
+  };
+  timeSeriesData?: {
+    data: Array<{
+      timestamp: string;
+      temperature: number;
+    }>;
+    lastUpdated: string;
+    centroid: [number, number];
+  };
 }
 
 export interface DataSource {
@@ -18,7 +31,7 @@ export interface DataSource {
 
 export interface ColorRule {
   id: string;
-  operator: "=" | "<" | ">" | "<=" | ">=";
+  operator: "=" | "<" | ">" | "<=" | ">=" | "==" | "!=";
   value: number;
   color: string;
 }

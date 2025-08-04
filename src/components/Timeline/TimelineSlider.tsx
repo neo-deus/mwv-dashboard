@@ -13,8 +13,13 @@ import {
 } from "@/utils/helpers";
 
 export function TimelineSlider() {
-  const { timeline, setTimelineMode, setSelectedTime, setTimeRange } =
-    useDashboardStore();
+  const {
+    timeline,
+    setTimelineMode,
+    setSelectedTime,
+    setTimeRange,
+    updatePolygonColorsForTime,
+  } = useDashboardStore();
 
   // Use state to avoid hydration issues with dates
   const [dateRange, setDateRange] = useState<{
@@ -63,11 +68,23 @@ export function TimelineSlider() {
     if (timeline.mode === "single") {
       const newDate = sliderValueToDate(values[0], startDate);
       setSelectedTime(newDate);
+
+      // Update polygon colors based on the selected time
+      console.log(
+        `Timeline changed to: ${newDate.toISOString()}, updating polygon colors`
+      );
+      updatePolygonColorsForTime(newDate);
     } else {
       const startTime = sliderValueToDate(values[0], startDate);
       const endTime = sliderValueToDate(values[1], startDate);
       setTimeRange(startTime, endTime);
       setSelectedTime(startTime); // Set selected time to range start
+
+      // Update polygon colors based on the range start time
+      console.log(
+        `Timeline range changed, updating polygon colors for: ${startTime.toISOString()}`
+      );
+      updatePolygonColorsForTime(startTime);
     }
   };
 

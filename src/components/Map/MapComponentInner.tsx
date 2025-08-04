@@ -7,6 +7,7 @@ import MapControls2 from "./MapControls2";
 import { GeomanControl } from "./GeomanControl";
 import { GeomanController } from "./GeomanController";
 import { PolygonRenderer } from "./PolygonRenderer";
+import { PolygonColorUpdater } from "./PolygonColorUpdater";
 
 export default function MapComponentInner() {
   const { map, setMapCenter, setMapZoom } = useDashboardStore();
@@ -84,6 +85,9 @@ export default function MapComponentInner() {
 
         {/* Polygon Renderer - restores polygons from store on page load */}
         <PolygonRenderer />
+
+        {/* Polygon Color Updater - updates map colors when store changes */}
+        <PolygonColorUpdater />
       </MapContainer>
     </div>
   );

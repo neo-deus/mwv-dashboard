@@ -5,16 +5,23 @@ import { useDashboardStore } from "@/stores/dashboardStore";
 import { useEffect, useRef } from "react";
 import * as L from "leaflet";
 import { useMap } from "react-leaflet";
+import { refreshPolygonWeatherIfStale } from "@/services/polygonWeatherService";
 
 export function PolygonRenderer() {
-  const { polygons, removePolygon, setSelectedPolygon, editingPolygon } =
-    useDashboardStore();
+  const {
+    polygons,
+    removePolygon,
+    setSelectedPolygon,
+    editingPolygon,
+    dataSources,
+    updatePolygon,
+  } = useDashboardStore();
   const layersRef = useRef<{ [key: string]: L.Polygon }>({});
   const map = useMap();
 
   // Effect to sync Leaflet layers with the Zustand store
   useEffect(() => {
-    console.log("PolygonRenderer: Syncing polygons", polygons.length);
+    // console.log("PolygonRenderer: Syncing polygons", polygons.length);
 
     // Get all existing layers that are managed by Geoman (freshly created)
     const existingGeomanLayers: string[] = [];
@@ -25,11 +32,11 @@ export function PolygonRenderer() {
         (layer as any).isCustomPolygon
       ) {
         existingGeomanLayers.push((layer as any)._polygonId);
-        console.log(
-          `Found existing Geoman layer for polygon: ${
-            (layer as any)._polygonId
-          }`
-        );
+        // console.log(
+        //   `Found existing Geoman layer for polygon: ${
+        //     (layer as any)._polygonId
+        //   }`
+        // );
       }
     });
 
@@ -54,9 +61,9 @@ export function PolygonRenderer() {
       const hasGeomanLayer = existingGeomanLayers.includes(polygon.id);
 
       if (!existingLayer && !hasGeomanLayer) {
-        console.log(
-          `PolygonRenderer: Creating restoration layer for ${polygon.id} (${polygon.name})`
-        );
+        // console.log(
+        //   `PolygonRenderer: Creating restoration layer for ${polygon.id} (${polygon.name})`
+        // );
 
         // Create coordinates (remove the last duplicate point if it exists)
         let coordinates = [...polygon.coordinates];
@@ -71,6 +78,55 @@ export function PolygonRenderer() {
         const latLngs = coordinates.map(
           (coord) => [coord[0], coord[1]] as [number, number]
         );
+
+        // Check if we need to refresh weather data for this polygon
+        const temperatureDataSource = dataSources.find(
+          (ds) => ds.id === "temperature"
+        );
+        if (temperatureDataSource && polygon.dataSource === "temperature") {
+          refreshPolygonWeatherIfStale(
+            polygon,
+            temperatureDataSource,
+            false,
+            true
+          )
+            .then((refreshedPolygon) => {
+              if (refreshedPolygon.color !== polygon.color) {
+                console.log(
+                  `Refreshed weather data for ${polygon.name}, updating color to ${refreshedPolygon.color}`
+                );
+              }
+
+              if (refreshedPolygon.timeSeriesData) {
+                console.log(
+                  `Refreshed time series data for ${polygon.name}: ${refreshedPolygon.timeSeriesData.data.length} data points`
+                );
+              }
+
+              updatePolygon(polygon.id, {
+                color: refreshedPolygon.color,
+                weatherData: refreshedPolygon.weatherData,
+                timeSeriesData: refreshedPolygon.timeSeriesData,
+              });
+
+              // Update the layer color if it exists
+              const existingLayer = layersRef.current[polygon.id];
+              if (existingLayer) {
+                existingLayer.setStyle({
+                  color: refreshedPolygon.color,
+                  fillColor: refreshedPolygon.color,
+                  fillOpacity: 0.5,
+                  weight: 2,
+                });
+              }
+            })
+            .catch((error) => {
+              console.warn(
+                `Failed to refresh weather data for ${polygon.name}:`,
+                error
+              );
+            });
+        }
 
         const polygonLayer = L.polygon(latLngs, {
           color: polygon.color,
@@ -145,12 +201,27 @@ export function PolygonRenderer() {
           );
         });
 
-        // Add popup with polygon info
+        // Add popup with polygon info including weather data
+        const weatherInfo = polygon.weatherData
+          ? `
+            <p style="margin: 4px 0; font-weight: bold; color: ${
+              polygon.color
+            };">
+              Temperature: ${polygon.weatherData.temperature.toFixed(1)}°C
+            </p>
+            <p style="margin: 4px 0; font-size: 12px; color: #666;">
+              Updated: ${new Date(
+                polygon.weatherData.timestamp
+              ).toLocaleTimeString()}
+            </p>`
+          : `<p style="margin: 4px 0; color: #999;">Weather data loading...</p>`;
+
         polygonLayer.bindPopup(`
           <div>
             <h3 style="font-weight: bold; margin: 0 0 8px 0;">${polygon.name}</h3>
             <p style="margin: 4px 0;">Data Source: ${polygon.dataSource}</p>
             <p style="margin: 4px 0;">Points: ${coordinates.length}</p>
+            ${weatherInfo}
             <button 
               onclick="window.deletePolygon('${polygon.id}')" 
               style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;"
@@ -168,16 +239,24 @@ export function PolygonRenderer() {
         // Store reference
         layersRef.current[polygon.id] = polygonLayer;
 
-        console.log(
-          `✅ Restored polygon ${polygon.id} with ${coordinates.length} points and color ${polygon.color}`
-        );
+        // console.log(
+        //   `✅ Restored polygon ${polygon.id} with ${coordinates.length} points and color ${polygon.color}`
+        // );
       } else if (hasGeomanLayer) {
-        console.log(
-          `PolygonRenderer: Skipping ${polygon.id} - already managed by Geoman`
-        );
+        // console.log(
+        //   `PolygonRenderer: Skipping ${polygon.id} - already managed by Geoman`
+        // );
       }
     });
-  }, [polygons, map, removePolygon, setSelectedPolygon, editingPolygon]);
+  }, [
+    polygons,
+    map,
+    removePolygon,
+    setSelectedPolygon,
+    editingPolygon,
+    dataSources,
+    updatePolygon,
+  ]);
 
   // Set up global delete function
   useEffect(() => {

@@ -122,7 +122,31 @@ export function PolygonList() {
           {/* Selected Polygon Details */}
           {selectedPolygon === polygon.id && (
             <div className="mt-3 pt-3 border-t text-xs">
-              <div className="space-y-1">
+              <div className="space-y-2">
+                {/* Weather Information */}
+                {polygon.weatherData && (
+                  <div>
+                    <span className="font-medium">Weather Data:</span>
+                    <div className="mt-1 text-muted-foreground">
+                      <div style={{ color: polygon.color, fontWeight: "bold" }}>
+                        Temperature:{" "}
+                        {polygon.weatherData.temperature.toFixed(1)}°C
+                      </div>
+                      <div className="text-xs">
+                        Updated:{" "}
+                        {new Date(
+                          polygon.weatherData.timestamp
+                        ).toLocaleString()}
+                      </div>
+                      <div className="text-xs">
+                        Centroid: {polygon.weatherData.centroid[0].toFixed(4)},{" "}
+                        {polygon.weatherData.centroid[1].toFixed(4)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Coordinates */}
                 <div>
                   <span className="font-medium">Coordinates:</span>
                   <div className="mt-1 max-h-20 overflow-y-auto text-muted-foreground">

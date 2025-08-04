@@ -3,17 +3,27 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import { useDashboardStore } from "@/stores/dashboardStore";
+import {
+  fetchPolygonWeatherData,
+  fetchPolygonTimeSeries,
+} from "@/services/polygonWeatherService";
 import * as L from "leaflet";
 
 export function GeomanController() {
   const map = useMap();
-  const { addPolygon, updatePolygon, polygons, editingPolygon } =
-    useDashboardStore();
+  const {
+    addPolygon,
+    updatePolygon,
+    polygons,
+    editingPolygon,
+    dataSources,
+    timeline,
+  } = useDashboardStore();
 
   useEffect(() => {
     if (!map || !map.pm) return;
 
-    console.log("GeomanController: Setting up controls and events");
+    // console.log("GeomanController: Setting up controls and events");
 
     // Add Geoman controls to the map (this might conflict with existing controls)
     // We'll configure them to work with our existing setup
@@ -62,25 +72,79 @@ export function GeomanController() {
           coordinates.push(coordinates[0]);
         }
 
-        // 4. Add to Zustand store
+        // 4. Create polygon with temporary color, then fetch weather data
         const newPolygon = addPolygon({
           name,
           coordinates,
           dataSource: "temperature", // Default
-          color: "#9ca3af",
+          color: "#9ca3af", // Temporary gray color
         });
 
         // 5. CRITICAL: Store the polygon ID in the layer so we can track it
         (layer as any)._polygonId = newPolygon.id;
         (layer as any).isCustomPolygon = true;
 
-        // 6. Apply the correct styling to match the stored color
+        // 6. Apply temporary styling while fetching weather data
         layer.setStyle({
-          color: newPolygon.color,
-          fillColor: newPolygon.color,
-          fillOpacity: 0.5,
+          color: "#9ca3af",
+          fillColor: "#9ca3af",
+          fillOpacity: 0.3,
           weight: 2,
         });
+
+        // 7. Fetch weather data and time series data for timeline functionality
+        const temperatureDataSource = dataSources.find(
+          (ds) => ds.id === "temperature"
+        );
+        if (temperatureDataSource) {
+          console.log(
+            `Fetching weather data and time series for new polygon: ${newPolygon.name}`
+          );
+
+          // Fetch both current weather and time series data
+          Promise.all([
+            fetchPolygonWeatherData(newPolygon, temperatureDataSource),
+            fetchPolygonTimeSeries(newPolygon),
+          ])
+            .then(([updatedPolygon, polygonWithTimeSeries]) => {
+              console.log(
+                `Weather data fetched for ${updatedPolygon.name}: ${updatedPolygon.weatherData?.temperature}°C`
+              );
+              console.log(
+                `Time series data fetched for ${polygonWithTimeSeries.name}: ${polygonWithTimeSeries.timeSeriesData?.data.length} points`
+              );
+
+              // Update the polygon in store with both weather data and time series data
+              updatePolygon(updatedPolygon.id, {
+                color: updatedPolygon.color,
+                weatherData: updatedPolygon.weatherData,
+                timeSeriesData: polygonWithTimeSeries.timeSeriesData,
+              });
+
+              // Update the visual layer styling
+              layer.setStyle({
+                color: updatedPolygon.color,
+                fillColor: updatedPolygon.color,
+                fillOpacity: 0.5,
+                weight: 2,
+              });
+
+              console.log(
+                `✅ Polygon ${updatedPolygon.name} setup complete with timeline data`
+              );
+            })
+            .catch((error) => {
+              console.error(
+                `Failed to fetch complete weather data for ${newPolygon.name}:`,
+                error
+              );
+              // Keep the gray color if weather fetch fails
+            });
+        } else {
+          console.warn(
+            "Temperature data source not found, using default color"
+          );
+        }
 
         // 7. Disable editing by default - user must click Edit button to enable
         layer.pm.disable();
@@ -202,11 +266,11 @@ export function GeomanController() {
     map.on("pm:editstart", (e: any) => console.log("🔥 Edit started", e));
     map.on("pm:editend", (e: any) => console.log("🔥 Edit ended", e));
 
-    console.log("GeomanController: All event listeners registered");
+    // console.log("GeomanController: All event listeners registered");
 
     // Cleanup function
     return () => {
-      console.log("GeomanController: Cleaning up event listeners");
+      // console.log("GeomanController: Cleaning up event listeners");
       map.off("pm:create", handleCreate);
       map.off("pm:edit", handleEdit);
       map.off("pm:remove", handleRemove);
@@ -214,7 +278,7 @@ export function GeomanController() {
       map.off("pm:editstart");
       map.off("pm:editend");
     };
-  }, [map, addPolygon, updatePolygon, polygons]);
+  }, [map, addPolygon, updatePolygon, polygons, dataSources, timeline]);
 
   // Separate effect to handle editing state changes
   useEffect(() => {
@@ -230,10 +294,10 @@ export function GeomanController() {
         const polygonId = (layer as any)._polygonId;
 
         if (editingPolygon === polygonId) {
-          console.log(`Enabling editing for polygon ${polygonId}`);
+          // console.log(`Enabling editing for polygon ${polygonId}`);
           layer.pm.enable();
         } else {
-          console.log(`Disabling editing for polygon ${polygonId}`);
+          // console.log(`Disabling editing for polygon ${polygonId}`);
           layer.pm.disable();
         }
       }

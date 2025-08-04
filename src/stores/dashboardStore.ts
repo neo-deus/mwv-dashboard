@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { updatePolygonColorForTime } from "@/services/polygonWeatherService";
 import type {
   DashboardState,
   Polygon,
@@ -20,6 +21,7 @@ interface DashboardStore extends DashboardState {
   updatePolygon: (id: string, updates: Partial<Polygon>) => void;
   setSelectedPolygon: (id?: string) => void;
   setEditingPolygon: (id?: string) => void;
+  updatePolygonColorsForTime: (targetTime: Date) => void;
 
   // Data source actions
   addDataSource: (dataSource: Omit<DataSource, "id">) => void;
@@ -128,6 +130,37 @@ export const useDashboardStore = create<DashboardStore>()(
           set(() => ({
             editingPolygon: id,
           })),
+
+        updatePolygonColorsForTime: (targetTime) =>
+          set((state) => {
+            const temperatureDataSource = state.dataSources.find(
+              (ds) => ds.id === "temperature"
+            );
+            if (!temperatureDataSource) {
+              console.warn(
+                "Temperature data source not found for color updates"
+              );
+              return state;
+            }
+
+            const updatedPolygons = state.polygons.map((polygon) => {
+              if (
+                polygon.dataSource === "temperature" &&
+                polygon.timeSeriesData
+              ) {
+                return updatePolygonColorForTime(
+                  polygon,
+                  targetTime,
+                  temperatureDataSource
+                );
+              }
+              return polygon;
+            });
+
+            return {
+              polygons: updatedPolygons,
+            };
+          }),
 
         // Data source actions
         addDataSource: (dataSource) =>

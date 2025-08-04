@@ -17,7 +17,7 @@ const Geoman = L.Control.extend({
   },
 
   onAdd(map: L.Map) {
-    console.log("GeomanControl onAdd called, map.pm available:", !!map.pm);
+    // console.log("GeomanControl onAdd called, map.pm available:", !!map.pm);
 
     if (!map.pm) {
       console.error("Geoman not available on map");
@@ -42,7 +42,7 @@ const Geoman = L.Control.extend({
       oneBlock: true,
     });
 
-    console.log("Geoman polygon-only controls added successfully");
+    // console.log("Geoman polygon-only controls added successfully");
 
     // Return a container div (required by Leaflet Control)
     const container = L.DomUtil.create("div", "leaflet-control-geoman");
