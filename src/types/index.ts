@@ -9,6 +9,7 @@ export interface Polygon {
   createdAt: Date | string; // Allow both Date objects and date strings (for persistence)
   weatherData?: {
     temperature: number;
+    windSpeed?: number; // Add wind speed to polygon weather data
     timestamp: string;
     centroid: [number, number]; // Store the centroid used for weather fetch
   };
@@ -16,6 +17,7 @@ export interface Polygon {
     data: Array<{
       timestamp: string;
       temperature: number;
+      windSpeed: number;
     }>;
     lastUpdated: string;
     centroid: [number, number];
@@ -66,4 +68,5 @@ export interface DashboardState {
   isDrawing: boolean;
   selectedPolygon?: string;
   editingPolygon?: string; // ID of polygon currently being edited
+  activeDataSourceId: string; // ID of currently active data source
 }

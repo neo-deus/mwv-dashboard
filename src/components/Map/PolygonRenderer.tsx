@@ -15,6 +15,7 @@ export function PolygonRenderer() {
     editingPolygon,
     dataSources,
     updatePolygon,
+    activeDataSourceId,
   } = useDashboardStore();
   const layersRef = useRef<{ [key: string]: L.Polygon }>({});
   const map = useMap();
@@ -80,16 +81,11 @@ export function PolygonRenderer() {
         );
 
         // Check if we need to refresh weather data for this polygon
-        const temperatureDataSource = dataSources.find(
-          (ds) => ds.id === "temperature"
+        const activeDataSource = dataSources.find(
+          (ds) => ds.id === activeDataSourceId
         );
-        if (temperatureDataSource && polygon.dataSource === "temperature") {
-          refreshPolygonWeatherIfStale(
-            polygon,
-            temperatureDataSource,
-            false,
-            true
-          )
+        if (activeDataSource && polygon.dataSource === activeDataSourceId) {
+          refreshPolygonWeatherIfStale(polygon, activeDataSource, false, true)
             .then((refreshedPolygon) => {
               if (refreshedPolygon.color !== polygon.color) {
                 console.log(
@@ -98,9 +94,9 @@ export function PolygonRenderer() {
               }
 
               if (refreshedPolygon.timeSeriesData) {
-                console.log(
-                  `Refreshed time series data for ${polygon.name}: ${refreshedPolygon.timeSeriesData.data.length} data points`
-                );
+                // console.log(
+                //   `Refreshed time series data for ${polygon.name}: ${refreshedPolygon.timeSeriesData.data.length} data points`
+                // );
               }
 
               updatePolygon(polygon.id, {
@@ -201,20 +197,85 @@ export function PolygonRenderer() {
           );
         });
 
+        // Helper function to get weather display info
+        const getWeatherDisplayInfo = (polygon: any) => {
+          if (!polygon.weatherData) return null;
+
+          const dataSource = dataSources.find(
+            (ds) => ds.id === polygon.dataSource
+          );
+          const dataSourceName = dataSource?.name || polygon.dataSource;
+
+          if (polygon.dataSource === "temperature") {
+            return {
+              label: "Temperature",
+              value: polygon.weatherData.temperature.toFixed(1),
+              unit: "°C",
+            };
+          } else if (polygon.dataSource === "windspeed") {
+            // Get wind speed from time series data if available
+            if (
+              polygon.timeSeriesData &&
+              polygon.timeSeriesData.data.length > 0
+            ) {
+              const targetTime = new Date(
+                polygon.weatherData.timestamp
+              ).getTime();
+              let closestPoint = polygon.timeSeriesData.data[0];
+              let minDiff = Math.abs(
+                new Date(closestPoint.timestamp).getTime() - targetTime
+              );
+
+              for (const point of polygon.timeSeriesData.data) {
+                const diff = Math.abs(
+                  new Date(point.timestamp).getTime() - targetTime
+                );
+                if (diff < minDiff) {
+                  minDiff = diff;
+                  closestPoint = point;
+                }
+              }
+
+              return {
+                label: "Wind Speed",
+                value: closestPoint.windSpeed.toFixed(1),
+                unit: " km/h",
+              };
+            }
+
+            return {
+              label: "Wind Speed",
+              value: "0.0",
+              unit: " km/h",
+            };
+          }
+
+          // Fallback to temperature
+          return {
+            label: "Temperature",
+            value: polygon.weatherData.temperature.toFixed(1),
+            unit: "°C",
+          };
+        };
+
         // Add popup with polygon info including weather data
-        const weatherInfo = polygon.weatherData
-          ? `
+        const weatherDisplayInfo = getWeatherDisplayInfo(polygon);
+        const weatherInfo =
+          weatherDisplayInfo && polygon.weatherData
+            ? `
             <p style="margin: 4px 0; font-weight: bold; color: ${
               polygon.color
             };">
-              Temperature: ${polygon.weatherData.temperature.toFixed(1)}°C
+              ${weatherDisplayInfo.label}: ${weatherDisplayInfo.value}${
+                weatherDisplayInfo.unit
+              }
             </p>
             <p style="margin: 4px 0; font-size: 12px; color: #666;">
               Updated: ${new Date(
                 polygon.weatherData.timestamp
               ).toLocaleTimeString()}
             </p>`
-          : `<p style="margin: 4px 0; color: #999;">Weather data loading...</p>`;
+            : `<p style="margin: 4px 0; color: #999;">Weather data loading...</p>`;
 
         polygonLayer.bindPopup(`
           <div>
@@ -256,6 +317,7 @@ export function PolygonRenderer() {
     editingPolygon,
     dataSources,
     updatePolygon,
+    activeDataSourceId,
   ]);
 
   // Set up global delete function

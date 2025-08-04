@@ -15,10 +15,59 @@ export function PolygonList() {
     dataSources,
     editingPolygon,
     setEditingPolygon,
+    activeDataSourceId,
   } = useDashboardStore();
 
   const getDataSourceName = (id: string) => {
     return dataSources.find((ds) => ds.id === id)?.name || "Unknown";
+  };
+
+  const getWeatherValue = (polygon: any, dataSourceId: string) => {
+    if (!polygon.weatherData) return null;
+
+    if (dataSourceId === "temperature") {
+      return {
+        value: polygon.weatherData.temperature,
+        unit: "°C",
+        label: "Temperature",
+      };
+    } else if (dataSourceId === "windspeed") {
+      // For wind speed, we need to get it from current weather or time series
+      // For now, we'll try to get it from the time series data at the current timestamp
+      if (polygon.timeSeriesData && polygon.timeSeriesData.data.length > 0) {
+        // Find the data point closest to the weatherData timestamp
+        const targetTime = new Date(polygon.weatherData.timestamp).getTime();
+        let closestPoint = polygon.timeSeriesData.data[0];
+        let minDiff = Math.abs(
+          new Date(closestPoint.timestamp).getTime() - targetTime
+        );
+
+        for (const point of polygon.timeSeriesData.data) {
+          const diff = Math.abs(
+            new Date(point.timestamp).getTime() - targetTime
+          );
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestPoint = point;
+          }
+        }
+
+        return {
+          value: closestPoint.windSpeed,
+          unit: " km/h",
+          label: "Wind Speed",
+        };
+      }
+
+      // Fallback if no time series data
+      return {
+        value: 0,
+        unit: " km/h",
+        label: "Wind Speed",
+      };
+    }
+
+    return null;
   };
 
   if (polygons.length === 0) {
@@ -128,10 +177,34 @@ export function PolygonList() {
                   <div>
                     <span className="font-medium">Weather Data:</span>
                     <div className="mt-1 text-muted-foreground">
-                      <div style={{ color: polygon.color, fontWeight: "bold" }}>
-                        Temperature:{" "}
-                        {polygon.weatherData.temperature.toFixed(1)}°C
-                      </div>
+                      {(() => {
+                        const weatherData = getWeatherValue(
+                          polygon,
+                          polygon.dataSource
+                        );
+                        if (weatherData) {
+                          return (
+                            <div
+                              style={{
+                                color: polygon.color,
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {weatherData.label}:{" "}
+                              {weatherData.value.toFixed(1)}
+                              {weatherData.unit}
+                            </div>
+                          );
+                        }
+                        return (
+                          <div
+                            style={{ color: polygon.color, fontWeight: "bold" }}
+                          >
+                            Temperature:{" "}
+                            {polygon.weatherData.temperature.toFixed(1)}°C
+                          </div>
+                        );
+                      })()}
                       <div className="text-xs">
                         Updated:{" "}
                         {new Date(

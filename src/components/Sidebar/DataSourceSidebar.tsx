@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -10,10 +10,34 @@ import { PolygonList } from "./PolygonList";
 import { Palette, Layers, Target } from "lucide-react";
 
 export function DataSourceSidebar() {
-  const { dataSources, polygons, selectedPolygon } = useDashboardStore();
+  const {
+    dataSources,
+    polygons,
+    selectedPolygon,
+    activeDataSourceId,
+    setActiveDataSource,
+    updatePolygonColorsForTime,
+    timeline,
+  } = useDashboardStore();
+
+  // Log current active data source for debugging
+  console.log(
+    `🎯 DataSourceSidebar - Current active data source: ${activeDataSourceId}`
+  );
+
   const [activeTab, setActiveTab] = useState<"polygons" | "rules" | "sources">(
     "polygons"
   );
+
+  // Refresh polygon colors when active data source changes
+  useEffect(() => {
+    console.log(
+      `🔄 Active data source changed, refreshing polygon colors for: ${activeDataSourceId}`
+    );
+    if (timeline.selectedTime) {
+      updatePolygonColorsForTime(timeline.selectedTime);
+    }
+  }, [activeDataSourceId, timeline.selectedTime, updatePolygonColorsForTime]);
 
   return (
     <div className="h-full flex flex-col">
@@ -68,14 +92,26 @@ export function DataSourceSidebar() {
               <p className="text-sm text-muted-foreground mb-4">
                 Define color rules for data visualization
               </p>
-              {dataSources.map((dataSource) => (
-                <div key={dataSource.id} className="mb-6">
-                  <h4 className="font-medium text-sm mb-2">
-                    {dataSource.name}
-                  </h4>
-                  <ColorRuleEditor dataSourceId={dataSource.id} />
-                </div>
-              ))}
+              {(() => {
+                const activeDataSource = dataSources.find(
+                  (ds) => ds.id === activeDataSourceId
+                );
+                if (!activeDataSource) {
+                  return (
+                    <div className="text-sm text-muted-foreground">
+                      No active data source found
+                    </div>
+                  );
+                }
+                return (
+                  <div>
+                    <h4 className="font-medium text-sm mb-2">
+                      {activeDataSource.name}
+                    </h4>
+                    <ColorRuleEditor dataSourceId={activeDataSource.id} />
+                  </div>
+                );
+              })()}
             </Card>
           </div>
         )}
@@ -84,10 +120,43 @@ export function DataSourceSidebar() {
           <div className="space-y-4">
             <Card className="p-4">
               <h3 className="font-medium mb-3">Data Sources</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Select which weather parameter to visualize on all polygons:
+              </p>
               {dataSources.map((source) => (
-                <div key={source.id} className="p-3 border rounded-lg mb-3">
+                <div
+                  key={source.id}
+                  className={`p-3 border rounded-lg mb-3 cursor-pointer transition-colors ${
+                    activeDataSourceId === source.id
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                  onClick={() => {
+                    console.log(
+                      `🖱️ Clicked on data source: ${source.id} (${source.name})`
+                    );
+                    console.log(
+                      `📈 Current active data source before change: ${activeDataSourceId}`
+                    );
+                    setActiveDataSource(source.id);
+                  }}
+                >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm">{source.name}</span>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-3 h-3 rounded-full ${
+                          activeDataSourceId === source.id
+                            ? "bg-blue-500"
+                            : "bg-gray-300"
+                        }`}
+                      />
+                      <span className="font-medium text-sm">{source.name}</span>
+                      {activeDataSourceId === source.id && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          Active
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-muted-foreground">
                       {source.field}
                     </span>
@@ -105,6 +174,19 @@ export function DataSourceSidebar() {
                 disabled
               >
                 Add Data Source (Bonus Feature)
+              </Button>
+
+              {/* Debug/Migration Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-2"
+                onClick={() => {
+                  localStorage.removeItem("mwv-dashboard-store");
+                  window.location.reload();
+                }}
+              >
+                🔄 Reset to Defaults (Debug)
               </Button>
             </Card>
           </div>

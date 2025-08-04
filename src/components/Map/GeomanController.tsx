@@ -18,6 +18,7 @@ export function GeomanController() {
     editingPolygon,
     dataSources,
     timeline,
+    activeDataSourceId,
   } = useDashboardStore();
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export function GeomanController() {
         const newPolygon = addPolygon({
           name,
           coordinates,
-          dataSource: "temperature", // Default
+          dataSource: activeDataSourceId, // Use active data source
           color: "#9ca3af", // Temporary gray color
         });
 
@@ -93,17 +94,19 @@ export function GeomanController() {
         });
 
         // 7. Fetch weather data and time series data for timeline functionality
-        const temperatureDataSource = dataSources.find(
-          (ds) => ds.id === "temperature"
+        const activeDataSource = dataSources.find(
+          (ds) => ds.id === activeDataSourceId
         );
-        if (temperatureDataSource) {
+        if (activeDataSource) {
           console.log(
-            `Fetching weather data and time series for new polygon: ${newPolygon.name}`
+            `Fetching ${activeDataSource.name.toLowerCase()} data and time series for new polygon: ${
+              newPolygon.name
+            }`
           );
 
           // Fetch both current weather and time series data
           Promise.all([
-            fetchPolygonWeatherData(newPolygon, temperatureDataSource),
+            fetchPolygonWeatherData(newPolygon, activeDataSource),
             fetchPolygonTimeSeries(newPolygon),
           ])
             .then(([updatedPolygon, polygonWithTimeSeries]) => {

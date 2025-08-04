@@ -7,7 +7,7 @@ import {
   fetchWeatherDataWithRetry,
   fetchCompleteWeatherTimeSeries,
 } from "@/services/weatherService";
-import { getTemperatureColor } from "@/utils/colorRules";
+import { applyRules } from "@/utils/colorRules";
 import type { Polygon, DataSource } from "@/types";
 
 /**
@@ -32,11 +32,32 @@ export async function fetchPolygonWeatherData(
     // Fetch weather data
     const weatherData = await fetchWeatherDataWithRetry(lat, lng);
 
-    // Apply color rules based on temperature
-    const dynamicColor = getTemperatureColor(
-      weatherData.temperature,
-      dataSource
+    // Apply color rules based on the data source type
+    let dynamicColor: string;
+    let weatherValue: number;
+
+    if (dataSource.id === "temperature") {
+      weatherValue = weatherData.temperature;
+      console.log(
+        `🌡️ Using temperature: ${weatherValue}°C for polygon ${polygon.name}`
+      );
+    } else if (dataSource.id === "windspeed") {
+      weatherValue = weatherData.windSpeed || 0;
+      console.log(
+        `💨 Using wind speed: ${weatherValue} km/h for polygon ${polygon.name}`
+      );
+    } else {
+      console.warn(
+        `Unknown data source: ${dataSource.id}, defaulting to temperature`
+      );
+      weatherValue = weatherData.temperature;
+    }
+
+    console.log(
+      `🎨 Applying rules to value ${weatherValue} for data source ${dataSource.id}`
     );
+    dynamicColor = applyRules(weatherValue, dataSource.rules);
+    console.log(`🎨 Result color: ${dynamicColor}`);
 
     // Return updated polygon with weather data and dynamic color
     const updatedPolygon: Polygon = {
@@ -44,6 +65,7 @@ export async function fetchPolygonWeatherData(
       color: dynamicColor,
       weatherData: {
         temperature: weatherData.temperature,
+        windSpeed: weatherData.windSpeed, // Store wind speed for wind speed data source
         timestamp: weatherData.timestamp,
         centroid: centroid,
       },
@@ -138,14 +160,15 @@ export async function refreshPolygonWeatherIfStale(
   forceRefresh: boolean = false,
   includeTimeSeries: boolean = true
 ): Promise<Polygon> {
-  if (!forceRefresh && !isWeatherDataStale(polygon.weatherData)) {
-    console.log(
-      `Weather data for polygon ${polygon.name} is still fresh, skipping refresh`
-    );
-    return polygon;
-  }
+  // Temporarily commented out for debugging - always refresh
+  // if (!forceRefresh && !isWeatherDataStale(polygon.weatherData)) {
+  //   console.log(
+  //     `Weather data for polygon ${polygon.name} is still fresh, skipping refresh`
+  //   );
+  //   return polygon;
+  // }
 
-  console.log(`Refreshing weather data for polygon ${polygon.name}`);
+  console.log(`🔄 Refreshing weather data for polygon ${polygon.name}`);
 
   if (includeTimeSeries) {
     console.log(`Also refreshing time series data for timeline functionality`);
@@ -217,18 +240,31 @@ export async function fetchPolygonTimeSeries(
 }
 
 /**
- * Get temperature for a specific timestamp from polygon's time series data
+ * Get weather value for a specific timestamp from polygon's time series data
  * @param polygon Polygon with time series data
- * @param targetTimestamp Target timestamp to get temperature for
- * @returns Temperature at the specified time, or null if not found
+ * @param targetTimestamp Target timestamp to get weather data for
+ * @param dataSource Data source to determine which weather parameter to extract
+ * @returns Weather value at the specified time, or null if not found
  */
-export function getTemperatureAtTime(
+export function getWeatherValueAtTime(
   polygon: Polygon,
-  targetTimestamp: Date
+  targetTimestamp: Date,
+  dataSource: DataSource
 ): number | null {
+  console.log(
+    `🔍 Getting weather value for polygon ${polygon.name}, data source: ${
+      dataSource.id
+    }, timestamp: ${targetTimestamp.toISOString()}`
+  );
+
   if (!polygon.timeSeriesData || !polygon.timeSeriesData.data.length) {
+    console.log(`❌ No time series data available for polygon ${polygon.name}`);
     return null;
   }
+
+  console.log(
+    `📊 Time series data available: ${polygon.timeSeriesData.data.length} data points`
+  );
 
   const targetTime = targetTimestamp.getTime();
 
@@ -248,17 +284,36 @@ export function getTemperatureAtTime(
     }
   }
 
-  // Only return temperature if the closest point is within 1 hour of target
+  console.log(`🎯 Closest data point:`, {
+    timestamp: closestDataPoint.timestamp,
+    temperature: closestDataPoint.temperature,
+    windSpeed: closestDataPoint.windSpeed,
+    timeDiff: minTimeDiff / (60 * 1000), // in minutes
+  });
+
+  // Only return value if the closest point is within 1 hour of target
   if (minTimeDiff <= 60 * 60 * 1000) {
     // 1 hour in milliseconds
-    return closestDataPoint.temperature;
+    if (dataSource.id === "temperature") {
+      console.log(`🌡️ Returning temperature: ${closestDataPoint.temperature}`);
+      return closestDataPoint.temperature;
+    } else if (dataSource.id === "windspeed") {
+      console.log(`💨 Returning wind speed: ${closestDataPoint.windSpeed}`);
+      return closestDataPoint.windSpeed;
+    }
+  } else {
+    console.log(
+      `⏰ Data point too far from target time: ${
+        minTimeDiff / (60 * 1000)
+      } minutes`
+    );
   }
 
   return null;
 }
 
 /**
- * Update polygon color based on temperature at a specific time
+ * Update polygon color based on weather data at a specific time
  * @param polygon Polygon to update
  * @param targetTimestamp Target timestamp
  * @param dataSource Data source with color rules
@@ -269,11 +324,26 @@ export function updatePolygonColorForTime(
   targetTimestamp: Date,
   dataSource: DataSource
 ): Polygon {
-  const temperature = getTemperatureAtTime(polygon, targetTimestamp);
+  console.log(
+    `🔧 updatePolygonColorForTime called for polygon ${polygon.name} with data source ${dataSource.id}`
+  );
+  console.log(`📅 Target timestamp: ${targetTimestamp.toISOString()}`);
+  console.log(`📊 Polygon has time series data:`, !!polygon.timeSeriesData);
+  if (polygon.timeSeriesData) {
+    console.log(
+      `📈 Time series data points: ${polygon.timeSeriesData.data.length}`
+    );
+  }
 
-  if (temperature === null) {
+  const weatherValue = getWeatherValueAtTime(
+    polygon,
+    targetTimestamp,
+    dataSource
+  );
+
+  if (weatherValue === null) {
     console.warn(
-      `No temperature data found for polygon ${
+      `No ${dataSource.name.toLowerCase()} data found for polygon ${
         polygon.name
       } at ${targetTimestamp.toISOString()}`
     );
@@ -283,13 +353,20 @@ export function updatePolygonColorForTime(
     };
   }
 
-  const dynamicColor = getTemperatureColor(temperature, dataSource);
+  const dynamicColor = applyRules(weatherValue, dataSource.rules);
 
   return {
     ...polygon,
     color: dynamicColor,
     weatherData: {
-      temperature: temperature,
+      temperature:
+        dataSource.id === "temperature"
+          ? weatherValue
+          : polygon.weatherData?.temperature || 0,
+      windSpeed:
+        dataSource.id === "windspeed"
+          ? weatherValue
+          : polygon.weatherData?.windSpeed || 0,
       timestamp: targetTimestamp.toISOString(),
       centroid: polygon.timeSeriesData?.centroid || [0, 0],
     },

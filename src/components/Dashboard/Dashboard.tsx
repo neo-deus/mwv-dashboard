@@ -4,11 +4,15 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { TimelineSlider } from "@/components/Timeline/TimelineSlider";
 import { MapComponent } from "@/components/Map/MapComponent";
 import { DataSourceSidebar } from "@/components/Sidebar/DataSourceSidebar";
+import { MigrationHelper } from "@/components/MigrationHelper";
 import { Map } from "../Map/Map";
 
 export default function Dashboard() {
   return (
     <QueryProvider>
+      {/* Migration Helper - runs data migrations on startup */}
+      <MigrationHelper />
+
       <div className="h-screen flex flex-col">
         {/* Header */}
         <header className="border-b bg-background p-3 shrink-0">

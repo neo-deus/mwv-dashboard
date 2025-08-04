@@ -27,6 +27,7 @@ interface DashboardStore extends DashboardState {
   addDataSource: (dataSource: Omit<DataSource, "id">) => void;
   updateDataSource: (id: string, updates: Partial<DataSource>) => void;
   removeDataSource: (id: string) => void;
+  setActiveDataSource: (dataSourceId: string) => void;
 
   // Map actions
   setMapCenter: (center: [number, number]) => void;
@@ -38,6 +39,7 @@ interface DashboardStore extends DashboardState {
 
   // Reset actions
   reset: () => void;
+  migrateDataSources: () => void;
 }
 
 // Default values
@@ -62,13 +64,25 @@ const defaultDataSource: DataSource = {
   ],
 };
 
+const windSpeedDataSource: DataSource = {
+  id: "windspeed",
+  name: "Wind Speed",
+  field: "windspeed_10m",
+  rules: [
+    { id: "1", operator: "<", value: 10, color: "#10b981" }, // Green for light wind (< 10 km/h)
+    { id: "2", operator: ">=", value: 10, color: "#f59e0b" }, // Orange for moderate wind (10-14 km/h)
+    { id: "3", operator: ">=", value: 15, color: "#ef4444" }, // Red for strong wind (≥ 15 km/h)
+  ],
+};
+
 const initialState: DashboardState = {
   polygons: [],
-  dataSources: [defaultDataSource],
+  dataSources: [defaultDataSource, windSpeedDataSource],
   timeline: defaultTimelineState,
   map: defaultMapState,
   isDrawing: false,
   editingPolygon: undefined,
+  activeDataSourceId: "temperature", // Default to temperature
 };
 
 export const useDashboardStore = create<DashboardStore>()(
@@ -133,25 +147,25 @@ export const useDashboardStore = create<DashboardStore>()(
 
         updatePolygonColorsForTime: (targetTime) =>
           set((state) => {
-            const temperatureDataSource = state.dataSources.find(
-              (ds) => ds.id === "temperature"
+            const activeDataSource = state.dataSources.find(
+              (ds) => ds.id === state.activeDataSourceId
             );
-            if (!temperatureDataSource) {
+            if (!activeDataSource) {
               console.warn(
-                "Temperature data source not found for color updates"
+                `Active data source (${state.activeDataSourceId}) not found for color updates`
               );
               return state;
             }
 
             const updatedPolygons = state.polygons.map((polygon) => {
               if (
-                polygon.dataSource === "temperature" &&
+                polygon.dataSource === state.activeDataSourceId &&
                 polygon.timeSeriesData
               ) {
                 return updatePolygonColorForTime(
                   polygon,
                   targetTime,
-                  temperatureDataSource
+                  activeDataSource
                 );
               }
               return polygon;
@@ -183,6 +197,28 @@ export const useDashboardStore = create<DashboardStore>()(
             dataSources: state.dataSources.filter((ds) => ds.id !== id),
           })),
 
+        setActiveDataSource: (dataSourceId) => {
+          console.log(`🔄 Active data source changed to: ${dataSourceId}`);
+          set((state) => {
+            const newDataSource = state.dataSources.find(
+              (ds) => ds.id === dataSourceId
+            );
+            console.log(`📊 Data source details:`, newDataSource);
+
+            // Update colors for all polygons based on new data source
+            if (newDataSource && state.timeline.selectedTime) {
+              console.log(
+                `🎨 Updating all polygon colors for new data source: ${dataSourceId}`
+              );
+              // This will be handled by the useEffect in DataSourceSidebar
+            }
+
+            return {
+              activeDataSourceId: dataSourceId,
+            };
+          });
+        },
+
         // Map actions
         setMapCenter: (center) =>
           set((state) => ({
@@ -204,6 +240,25 @@ export const useDashboardStore = create<DashboardStore>()(
 
         // Reset actions
         reset: () => set(initialState),
+
+        // Migration actions
+        migrateDataSources: () =>
+          set((state) => {
+            // Check if wind speed data source exists
+            const hasWindSpeed = state.dataSources.some(
+              (ds) => ds.id === "windspeed"
+            );
+
+            if (!hasWindSpeed) {
+              console.log("Migrating data sources: Adding Wind Speed");
+              return {
+                ...state,
+                dataSources: [defaultDataSource, windSpeedDataSource],
+              };
+            }
+
+            return state;
+          }),
       }),
       {
         name: "mwv-dashboard-store",

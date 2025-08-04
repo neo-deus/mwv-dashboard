@@ -12,6 +12,7 @@ export interface WeatherData {
 export interface TimeSeriesWeatherData {
   timestamp: string;
   temperature: number;
+  windSpeed: number;
 }
 
 export interface OpenMeteoResponse {
@@ -29,6 +30,7 @@ export interface OpenMeteoHistoricalResponse {
   hourly: {
     time: string[];
     temperature_2m: number[];
+    windspeed_10m: number[];
   };
 }
 
@@ -36,6 +38,7 @@ export interface OpenMeteoForecastResponse {
   hourly: {
     time: string[];
     temperature_2m: number[];
+    windspeed_10m: number[];
   };
 }
 
@@ -137,13 +140,15 @@ export async function fetchHistoricalWeatherData(
     const startDateStr = startDate.toISOString().split("T")[0];
     const endDateStr = endDate.toISOString().split("T")[0];
 
-    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDateStr}&end_date=${endDateStr}&hourly=temperature_2m&timezone=auto`;
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDateStr}&end_date=${endDateStr}&hourly=temperature_2m,windspeed_10m&timezone=auto`;
 
     console.log(
       `📅 Fetching historical weather data for coordinates: ${lat}, ${lng} from ${startDateStr} to ${endDateStr}`
     );
 
     const response = await fetch(url);
+
+    console.log(response);
 
     console.log(`📞 Historical API response:`, {
       status: response.status,
@@ -164,6 +169,7 @@ export async function fetchHistoricalWeatherData(
       (time, index) => ({
         timestamp: time,
         temperature: data.hourly.temperature_2m[index],
+        windSpeed: data.hourly.windspeed_10m[index],
       })
     );
 
@@ -193,7 +199,7 @@ export async function fetchForecastWeatherData(
   lng: number
 ): Promise<TimeSeriesWeatherData[]> {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m&forecast_days=15&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,windspeed_10m&forecast_days=15&timezone=auto`;
 
     console.log(
       `🔮 Fetching forecast weather data for coordinates: ${lat}, ${lng} for next 15 days`
@@ -214,6 +220,7 @@ export async function fetchForecastWeatherData(
       (time, index) => ({
         timestamp: time,
         temperature: data.hourly.temperature_2m[index],
+        windSpeed: data.hourly.windspeed_10m[index],
       })
     );
 

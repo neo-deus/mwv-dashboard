@@ -74,9 +74,9 @@ export function PolygonColorUpdater() {
             }
           }
 
-          console.log(
-            `Updated layer color for polygon ${polygonId} to ${polygon.color}`
-          );
+          // console.log(
+          //   `Updated layer color for polygon ${polygonId} to ${polygon.color}`
+          // );
         }
       }
     });
