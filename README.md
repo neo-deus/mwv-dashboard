@@ -169,12 +169,13 @@ npm run build  # Includes type checking
 *Interactive polygon drawing interface*
 
 ![Different Datasources](./public/screenshots/DataSources.png)
-*Toggle between temperature and wind speed data*]
+*Toggle between temperature and wind speed data*
 
 <p align="center">
   <img src="./public/screenshots/Mobile1.jpeg" alt="Mobile View" width="250" />
   <img src="./public/screenshots/Mobile2.jpeg" alt="Mobile View 2" width="250" />
 </p>
+
 *Responsive mobile interface*
 
 
