@@ -165,7 +165,7 @@ npm run build  # Includes type checking
 ![Dashboard Overview](./public/screenshots/Homepage.png)
 *Main dashboard with temperature visualization*
 
-![Polygon Creation](./public/screenshots/polygons.png)
+![Polygon Creation](./public/screenshots/Polygons.png)
 *Interactive polygon drawing interface*
 
 ![Different Datasources](./public/screenshots/DataSources.png)
