@@ -130,11 +130,15 @@ export function ColorRuleEditor({ dataSourceId }: ColorRuleEditorProps) {
                 operator: e.target.value as ColorRule["operator"],
               })
             }
-            className="px-2 py-1 text-sm border rounded bg-white min-w-0 flex-shrink-0"
+            className="px-2 py-1 text-sm border rounded bg-background text-foreground dark:bg-background dark:text-foreground dark:border-border min-w-0 flex-shrink-0"
             style={{ width: "60px" }}
           >
             {OPERATORS.map((op) => (
-              <option key={op.value} value={op.value}>
+              <option
+                key={op.value}
+                value={op.value}
+                className="bg-background text-foreground"
+              >
                 {op.value}{" "}
                 {/* {op.value === ">=" ? "≥" : op.value === "<=" ? "≤" : ""} */}
               </option>
@@ -150,7 +154,7 @@ export function ColorRuleEditor({ dataSourceId }: ColorRuleEditorProps) {
                 value: parseFloat(e.target.value) || 0,
               })
             }
-            className="px-2 py-1 text-sm border rounded bg-white min-w-0 flex-shrink-0"
+            className="px-2 py-1 text-sm border rounded bg-background text-foreground dark:bg-background dark:text-foreground dark:border-border min-w-0 flex-shrink-0"
             style={{ width: "60px" }}
             step="0.1"
           />

@@ -5,13 +5,20 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardStore } from "@/stores/dashboardStore";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Menu } from "lucide-react";
 import {
   formatDisplayDate,
   generateTimelineHours,
   sliderValueToDate,
   dateToSliderValue,
 } from "@/utils/helpers";
+
+// Return type for TimelineSlider component
+interface TimelineSliderReturn {
+  timelineComponent: React.ReactElement;
+  isMobileSidebarOpen: boolean;
+  setIsMobileSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 // Custom Slider with Tooltip
 function SliderWithTooltip({
@@ -132,7 +139,7 @@ function SliderWithTooltip({
   );
 }
 
-export function TimelineSlider() {
+export function TimelineSlider(): TimelineSliderReturn {
   const {
     timeline,
     setTimelineMode,
@@ -143,6 +150,8 @@ export function TimelineSlider() {
 
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(false);
+  // Mobile sidebar state
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Initialize dark mode from localStorage and system preference
   useEffect(() => {
@@ -201,15 +210,19 @@ export function TimelineSlider() {
 
   // Don't render until we have the date range (client-side only)
   if (!dateRange) {
-    return (
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div className="h-8 bg-muted animate-pulse rounded"></div>
-          <div className="h-4 bg-muted animate-pulse rounded"></div>
-          <div className="h-6 bg-muted animate-pulse rounded"></div>
-        </div>
-      </Card>
-    );
+    return {
+      timelineComponent: (
+        <Card className="p-6">
+          <div className="space-y-4">
+            <div className="h-8 bg-muted animate-pulse rounded"></div>
+            <div className="h-4 bg-muted animate-pulse rounded"></div>
+            <div className="h-6 bg-muted animate-pulse rounded"></div>
+          </div>
+        </Card>
+      ),
+      isMobileSidebarOpen,
+      setIsMobileSidebarOpen,
+    };
   }
 
   const { startDate, endDate, totalHours } = dateRange;
@@ -241,93 +254,125 @@ export function TimelineSlider() {
     }
   };
 
-  return (
-    <Card className="p-6">
-      <div className="space-y-4">
-        {/* Mode Toggle */}
-        <div className="flex items-center justify-between">
-          <div className="text-xl font-semibold">MWV Dashboard</div>
-          <div className="flex items-center gap-4">
-            {/* Dark Mode Toggle */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleDarkMode}
-              className="flex items-center gap-2"
-            >
-              {isDarkMode ? (
-                <>
-                  <Sun className="h-4 w-4" />
-                  <span className="hidden sm:inline">Light</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Dark</span>
-                </>
-              )}
-            </Button>
+  return {
+    timelineComponent: (
+      <Card className="p-6">
+        <div className="space-y-4">
+          {/* Mode Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="text-xl font-semibold">MWV Dashboard</div>
+            <div className="flex items-center gap-4">
+              {/* Mobile Hamburger Menu */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="lg:hidden flex items-center gap-2"
+              >
+                <Menu className="h-4 w-4" />
+                <span className="hidden sm:inline">Menu</span>
+              </Button>
 
-            {/* Timeline Mode Toggle */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Timeline Mode:</span>
+              {/* Dark Mode Toggle */}
               <Button
-                variant={timeline.mode === "single" ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                onClick={() => setTimelineMode("single")}
+                onClick={toggleDarkMode}
+                className="flex items-center gap-2"
               >
-                Single Time
+                {isDarkMode ? (
+                  <>
+                    <Sun className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-4 w-4" />
+                  </>
+                )}
               </Button>
-              <Button
-                variant={timeline.mode === "range" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setTimelineMode("range")}
-              >
-                Time Range
-              </Button>
+
+              {/* Timeline Mode Toggle */}
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="text-sm font-medium">Timeline Mode:</span>
+                <Button
+                  variant={timeline.mode === "single" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimelineMode("single")}
+                >
+                  Single Time
+                </Button>
+                <Button
+                  variant={timeline.mode === "range" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimelineMode("range")}
+                >
+                  Time Range
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Timeline Slider */}
-        <div className="px-2 py-4">
-          {timeline.mode === "single" ? (
-            <SliderWithTooltip
-              value={[currentValue]}
-              onValueChange={handleSliderChange}
-              max={totalHours}
-              min={0}
-              step={1}
-              className="w-full"
-              startDate={startDate}
-            />
-          ) : (
-            <SliderWithTooltip
-              value={[
-                timeline.startTime
-                  ? dateToSliderValue(timeline.startTime, startDate)
-                  : 0,
-                timeline.endTime
-                  ? dateToSliderValue(timeline.endTime, startDate)
-                  : totalHours,
-              ]}
-              onValueChange={handleSliderChange}
-              max={totalHours}
-              min={0}
-              step={1}
-              className="w-full"
-              startDate={startDate}
-            />
-          )}
-        </div>
+          {/* Mobile Timeline Mode Toggle */}
+          <div className="sm:hidden flex items-center gap-2">
+            <span className="text-sm font-medium">Timeline Mode:</span>
+            <Button
+              variant={timeline.mode === "single" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimelineMode("single")}
+            >
+              Single
+            </Button>
+            <Button
+              variant={timeline.mode === "range" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimelineMode("range")}
+            >
+              Range
+            </Button>
+          </div>
 
-        {/* Date Range Labels */}
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{formatDisplayDate(startDate)}</span>
-          <span>Today</span>
-          <span>{formatDisplayDate(endDate)}</span>
+          {/* Timeline Slider */}
+          <div className="px-2 py-4">
+            {timeline.mode === "single" ? (
+              <SliderWithTooltip
+                value={[currentValue]}
+                onValueChange={handleSliderChange}
+                max={totalHours}
+                min={0}
+                step={1}
+                className="w-full"
+                startDate={startDate}
+              />
+            ) : (
+              <SliderWithTooltip
+                value={[
+                  timeline.startTime
+                    ? dateToSliderValue(timeline.startTime, startDate)
+                    : 0,
+                  timeline.endTime
+                    ? dateToSliderValue(timeline.endTime, startDate)
+                    : totalHours,
+                ]}
+                onValueChange={handleSliderChange}
+                max={totalHours}
+                min={0}
+                step={1}
+                className="w-full"
+                startDate={startDate}
+              />
+            )}
+          </div>
+
+          {/* Date Range Labels */}
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{formatDisplayDate(startDate)}</span>
+            <span>Today</span>
+            <span>{formatDisplayDate(endDate)}</span>
+          </div>
         </div>
-      </div>
-    </Card>
-  );
+      </Card>
+    ),
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen,
+  };
 }

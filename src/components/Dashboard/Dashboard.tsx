@@ -13,23 +13,13 @@ export default function Dashboard() {
       <MigrationHelper />
 
       <div className="h-screen flex flex-col">
-        {/* Header */}
-        {/* <header className="border-b bg-background p-3 shrink-0">
-          <h1 className="text-xl font-bold">MWV Weather Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Interactive weather data visualization with polygon analysis
-          </p>
-        </header> */}
-
-        {/* Timeline Slider */}
-
         {/* Main Content */}
         <div className="flex-1 flex min-h-0">
           {/* Map Area */}
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Timeline Slider */}
+            {/* Timeline Slider with Mobile Navigation */}
             <div className="border-b bg-background p-3 shrink-0">
-              <TimelineSlider />
+              <TimelineSliderWithMobile />
             </div>
             {/* Map Component */}
             <div className="flex-1 relative">
@@ -37,12 +27,43 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="w-80 border-l bg-background shrink-0">
+          {/* Desktop Sidebar - hidden on mobile */}
+          <div className="hidden lg:block w-80 border-l bg-background shrink-0">
             <DataSourceSidebar />
           </div>
         </div>
       </div>
     </QueryProvider>
+  );
+}
+
+function TimelineSliderWithMobile() {
+  const { timelineComponent, isMobileSidebarOpen, setIsMobileSidebarOpen } =
+    TimelineSlider();
+
+  return (
+    <>
+      {timelineComponent}
+
+      {/* Mobile Sidebar Modal */}
+      {isMobileSidebarOpen && (
+        <div className="lg:hidden fixed inset-0 z-[9999]">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+
+          {/* Sidebar Modal */}
+          <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-background border-l shadow-xl z-[10000]">
+            <div className="h-full overflow-y-auto">
+              <DataSourceSidebar
+                onClose={() => setIsMobileSidebarOpen(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
