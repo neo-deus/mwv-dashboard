@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardStore } from "@/stores/dashboardStore";
+import { Moon, Sun } from "lucide-react";
 import {
   formatDisplayDate,
   generateTimelineHours,
@@ -71,14 +72,14 @@ function SliderWithTooltip({
       {/* Tooltip */}
       {showTooltip && (
         <div
-          className="absolute -top-12 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg z-10 transform -translate-x-1/2 whitespace-nowrap"
+          className="absolute -top-12 bg-blue-600 dark:bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg z-10 transform -translate-x-1/2 whitespace-nowrap"
           style={{
             left: `${(tooltipValue / max) * 100}%`,
           }}
         >
           {tooltipText}
           {/* Tooltip arrow */}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-blue-600"></div>
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-blue-600 dark:border-t-blue-500"></div>
         </div>
       )}
 
@@ -139,6 +140,39 @@ export function TimelineSlider() {
     setTimeRange,
     updatePolygonColorsForTime,
   } = useDashboardStore();
+
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Initialize dark mode from localStorage and system preference
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    const systemPrefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+
+    if (savedTheme === "dark" || (!savedTheme && systemPrefersDark)) {
+      setIsDarkMode(true);
+      document.documentElement.classList.add("dark");
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+
+    if (newDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  };
 
   // Use state to avoid hydration issues with dates
   const [dateRange, setDateRange] = useState<{
@@ -213,22 +247,45 @@ export function TimelineSlider() {
         {/* Mode Toggle */}
         <div className="flex items-center justify-between">
           <div className="text-xl font-semibold">MWV Dashboard</div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Timeline Mode:</span>
+          <div className="flex items-center gap-4">
+            {/* Dark Mode Toggle */}
             <Button
-              variant={timeline.mode === "single" ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setTimelineMode("single")}
+              onClick={toggleDarkMode}
+              className="flex items-center gap-2"
             >
-              Single Time
+              {isDarkMode ? (
+                <>
+                  <Sun className="h-4 w-4" />
+                  <span className="hidden sm:inline">Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Dark</span>
+                </>
+              )}
             </Button>
-            <Button
-              variant={timeline.mode === "range" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTimelineMode("range")}
-            >
-              Time Range
-            </Button>
+
+            {/* Timeline Mode Toggle */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Timeline Mode:</span>
+              <Button
+                variant={timeline.mode === "single" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTimelineMode("single")}
+              >
+                Single Time
+              </Button>
+              <Button
+                variant={timeline.mode === "range" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTimelineMode("range")}
+              >
+                Time Range
+              </Button>
+            </div>
           </div>
         </div>
 

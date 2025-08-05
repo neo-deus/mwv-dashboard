@@ -147,6 +147,17 @@
   background-color: #f5f5f5 !important;
 }
 
+/* Dark mode map controls */
+.dark .leaflet-control-zoom a {
+  background-color: oklch(0.269 0 0) !important;
+  border: 1px solid oklch(1 0 0 / 20%) !important;
+  color: oklch(0.985 0 0) !important;
+}
+
+.dark .leaflet-control-zoom a:hover {
+  background-color: oklch(0.3 0 0) !important;
+}
+
 /* Polygon drawing styles */
 .leaflet-draw-tooltip {
   background: white;
@@ -154,6 +165,44 @@
   border-radius: 4px;
   padding: 4px 8px;
   font-size: 12px;
+}
+
+/* Dark mode tooltip */
+.dark .leaflet-draw-tooltip {
+  background: oklch(0.269 0 0);
+  border: 1px solid oklch(1 0 0 / 20%);
+  color: oklch(0.985 0 0);
+}
+
+/* Map popup styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 6px;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background: oklch(0.269 0 0);
+  color: oklch(0.985 0 0);
+}
+
+.dark .leaflet-popup-tip {
+  background: oklch(0.269 0 0);
+}
+
+/* Geoman toolbar dark mode */
+.dark .leaflet-pm-toolbar {
+  background: oklch(0.269 0 0);
+  border: 1px solid oklch(1 0 0 / 20%);
+  border-radius: 6px;
+}
+
+.dark .leaflet-pm-action {
+  background: oklch(0.269 0 0) !important;
+  color: oklch(0.985 0 0) !important;
+  border: 1px solid oklch(1 0 0 / 20%) !important;
+}
+
+.dark .leaflet-pm-action:hover {
+  background: oklch(0.3 0 0) !important;
 }
 
 /* Custom polygon styles */
