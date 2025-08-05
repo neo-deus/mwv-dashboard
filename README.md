@@ -195,10 +195,6 @@ The application is deployed on Vercel with automatic deployments from the main b
 
 **Live URL**: [https://mwv-dashboard-kxar.vercel.app/](https://mwv-dashboard-kxar.vercel.app/)
 
-## 📄 License
-
-This project is developed as part of an assignment for MWV (Meteorologischer Wetterdienst Verein).
-
 ---
 
 _Built with ❤️ using Next.js and modern web technologies_
