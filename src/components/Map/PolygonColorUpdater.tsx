@@ -10,7 +10,7 @@ import * as L from "leaflet";
 
 export function PolygonColorUpdater() {
   const map = useMap();
-  const { polygons } = useDashboardStore();
+  const { polygons, activeDataSourceId, dataSources } = useDashboardStore();
 
   useEffect(() => {
     if (!map) return;
@@ -36,11 +36,32 @@ export function PolygonColorUpdater() {
 
           // Update popup content if it exists and has weather data
           if (polygon.weatherData) {
+            // Generate weather info based on active data source
+            const activeDataSource = dataSources.find(
+              (ds) => ds.id === activeDataSourceId
+            );
+            let weatherDisplayValue = "";
+            let weatherUnit = "";
+
+            if (activeDataSource?.id === "temperature") {
+              weatherDisplayValue = polygon.weatherData.temperature.toFixed(1);
+              weatherUnit = "°C";
+            } else if (activeDataSource?.id === "windspeed") {
+              weatherDisplayValue = polygon.weatherData.windSpeed.toFixed(1);
+              weatherUnit = " m/s";
+            } else {
+              // Fallback to temperature if data source is unknown
+              weatherDisplayValue = polygon.weatherData.temperature.toFixed(1);
+              weatherUnit = "°C";
+            }
+
             const weatherInfo = `
               <p style="margin: 4px 0; font-weight: bold; color: ${
                 polygon.color
               };">
-                Temperature: ${polygon.weatherData.temperature.toFixed(1)}°C
+                ${
+                  activeDataSource?.name || "Temperature"
+                }: ${weatherDisplayValue}${weatherUnit}
               </p>
               <p style="margin: 4px 0; font-size: 12px; color: #666;">
                 Time: ${new Date(
@@ -62,12 +83,7 @@ export function PolygonColorUpdater() {
                     polygon.coordinates.length - 1
                   }</p>
                   ${weatherInfo}
-                  <button 
-                    onclick="window.deletePolygon('${polygon.id}')" 
-                    style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;"
-                  >
-                    Delete
-                  </button>
+                  
                 </div>
               `;
               popup.setContent(updatedContent);

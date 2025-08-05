@@ -125,8 +125,14 @@ export function validatePolygon(coordinates: [number, number][]): {
 /**
  * Convert timeline slider value to date
  */
-export function sliderValueToDate(value: number, startDate: Date): Date {
-  const date = new Date(startDate);
+export function sliderValueToDate(
+  value: number,
+  startDate: Date | string
+): Date {
+  // Ensure startDate is a Date object (handle string dates from persistence)
+  const startDateObj =
+    startDate instanceof Date ? startDate : new Date(startDate);
+  const date = new Date(startDateObj);
   date.setHours(date.getHours() + value);
   return date;
 }
@@ -134,8 +140,18 @@ export function sliderValueToDate(value: number, startDate: Date): Date {
 /**
  * Convert date to timeline slider value
  */
-export function dateToSliderValue(date: Date, startDate: Date): number {
-  return Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60));
+export function dateToSliderValue(
+  date: Date | string,
+  startDate: Date
+): number {
+  // Ensure date is a Date object (handle string dates from persistence)
+  const dateObj = date instanceof Date ? date : new Date(date);
+  const startDateObj =
+    startDate instanceof Date ? startDate : new Date(startDate);
+
+  return Math.floor(
+    (dateObj.getTime() - startDateObj.getTime()) / (1000 * 60 * 60)
+  );
 }
 
 /**

@@ -12,6 +12,125 @@ import {
   dateToSliderValue,
 } from "@/utils/helpers";
 
+// Custom Slider with Tooltip
+function SliderWithTooltip({
+  value,
+  onValueChange,
+  max,
+  min,
+  step,
+  className,
+  startDate,
+}: {
+  value: number[];
+  onValueChange: (values: number[]) => void;
+  max: number;
+  min: number;
+  step: number;
+  className: string;
+  startDate: Date;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [activeThumbIndex, setActiveThumbIndex] = useState(0);
+  const [tooltipValue, setTooltipValue] = useState(value[0]);
+
+  // Update tooltip value when the slider value changes externally
+  useEffect(() => {
+    if (value.length > 1 && activeThumbIndex === 1) {
+      setTooltipValue(value[1]);
+    } else {
+      setTooltipValue(value[0]);
+    }
+  }, [value, activeThumbIndex]);
+
+  const handleValueChange = (values: number[]) => {
+    // Determine which thumb is being moved
+    const isStartChanged = values[0] !== value[0];
+    const isEndChanged = values.length > 1 && values[1] !== value[1];
+
+    if (isStartChanged) {
+      setActiveThumbIndex(0);
+      setTooltipValue(values[0]);
+    } else if (isEndChanged) {
+      setActiveThumbIndex(1);
+      setTooltipValue(values[1]);
+    } else {
+      // If it's the first value change or single value mode
+      setActiveThumbIndex(0);
+      setTooltipValue(values[0]);
+    }
+
+    onValueChange(values);
+  };
+
+  const currentDate = sliderValueToDate(tooltipValue, startDate);
+  const tooltipText = formatDisplayDate(currentDate);
+
+  return (
+    <div className="relative">
+      {/* Tooltip */}
+      {showTooltip && (
+        <div
+          className="absolute -top-12 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg z-10 transform -translate-x-1/2 whitespace-nowrap"
+          style={{
+            left: `${(tooltipValue / max) * 100}%`,
+          }}
+        >
+          {tooltipText}
+          {/* Tooltip arrow */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-blue-600"></div>
+        </div>
+      )}
+
+      <Slider
+        value={value}
+        onValueChange={handleValueChange}
+        max={max}
+        min={min}
+        step={step}
+        className={className}
+        onPointerDown={(e) => {
+          setShowTooltip(true);
+          // Determine which thumb is being clicked based on mouse position
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const sliderWidth = rect.width;
+          const clickPercentage = clickX / sliderWidth;
+          const clickValue = clickPercentage * max;
+
+          if (value.length > 1) {
+            // For range mode, determine which thumb is closer to the click
+            const distanceToStart = Math.abs(clickValue - value[0]);
+            const distanceToEnd = Math.abs(clickValue - value[1]);
+
+            if (distanceToStart <= distanceToEnd) {
+              setActiveThumbIndex(0);
+              setTooltipValue(value[0]);
+            } else {
+              setActiveThumbIndex(1);
+              setTooltipValue(value[1]);
+            }
+          } else {
+            setActiveThumbIndex(0);
+            setTooltipValue(value[0]);
+          }
+        }}
+        onPointerUp={() => setShowTooltip(false)}
+        onMouseEnter={() => {
+          // Set tooltip to the active thumb value when hovering
+          if (value.length > 1 && activeThumbIndex === 1) {
+            setTooltipValue(value[1]);
+          } else {
+            setTooltipValue(value[0]);
+          }
+          setShowTooltip(true);
+        }}
+        onMouseLeave={() => setShowTooltip(false)}
+      />
+    </div>
+  );
+}
+
 export function TimelineSlider() {
   const {
     timeline,
@@ -92,55 +211,41 @@ export function TimelineSlider() {
     <Card className="p-6">
       <div className="space-y-4">
         {/* Mode Toggle */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Timeline Mode:</span>
-          <Button
-            variant={timeline.mode === "single" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setTimelineMode("single")}
-          >
-            Single Time
-          </Button>
-          <Button
-            variant={timeline.mode === "range" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setTimelineMode("range")}
-          >
-            Time Range
-          </Button>
-        </div>
-
-        {/* Current Selection Display */}
-        <div className="text-sm text-muted-foreground">
-          {timeline.mode === "single" ? (
-            <span>Selected: {formatDisplayDate(timeline.selectedTime)}</span>
-          ) : (
-            <span>
-              Range:{" "}
-              {timeline.startTime
-                ? formatDisplayDate(timeline.startTime)
-                : "Not selected"}
-              {" → "}
-              {timeline.endTime
-                ? formatDisplayDate(timeline.endTime)
-                : "Not selected"}
-            </span>
-          )}
+        <div className="flex items-center justify-between">
+          <div className="text-xl font-semibold">MWV Dashboard</div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Timeline Mode:</span>
+            <Button
+              variant={timeline.mode === "single" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimelineMode("single")}
+            >
+              Single Time
+            </Button>
+            <Button
+              variant={timeline.mode === "range" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimelineMode("range")}
+            >
+              Time Range
+            </Button>
+          </div>
         </div>
 
         {/* Timeline Slider */}
-        <div className="px-2">
+        <div className="px-2 py-4">
           {timeline.mode === "single" ? (
-            <Slider
+            <SliderWithTooltip
               value={[currentValue]}
               onValueChange={handleSliderChange}
               max={totalHours}
               min={0}
               step={1}
               className="w-full"
+              startDate={startDate}
             />
           ) : (
-            <Slider
+            <SliderWithTooltip
               value={[
                 timeline.startTime
                   ? dateToSliderValue(timeline.startTime, startDate)
@@ -154,6 +259,7 @@ export function TimelineSlider() {
               min={0}
               step={1}
               className="w-full"
+              startDate={startDate}
             />
           )}
         </div>

@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDashboardStore } from "@/stores/dashboardStore";
-import { Trash2, MapPin, Eye, Edit3 } from "lucide-react";
+import { Trash2, MapPin, Eye, Edit3, Save } from "lucide-react";
 import { formatDisplayDate } from "@/utils/helpers";
 
 export function PolygonList() {
@@ -32,37 +32,10 @@ export function PolygonList() {
         label: "Temperature",
       };
     } else if (dataSourceId === "windspeed") {
-      // For wind speed, we need to get it from current weather or time series
-      // For now, we'll try to get it from the time series data at the current timestamp
-      if (polygon.timeSeriesData && polygon.timeSeriesData.data.length > 0) {
-        // Find the data point closest to the weatherData timestamp
-        const targetTime = new Date(polygon.weatherData.timestamp).getTime();
-        let closestPoint = polygon.timeSeriesData.data[0];
-        let minDiff = Math.abs(
-          new Date(closestPoint.timestamp).getTime() - targetTime
-        );
-
-        for (const point of polygon.timeSeriesData.data) {
-          const diff = Math.abs(
-            new Date(point.timestamp).getTime() - targetTime
-          );
-          if (diff < minDiff) {
-            minDiff = diff;
-            closestPoint = point;
-          }
-        }
-
-        return {
-          value: closestPoint.windSpeed,
-          unit: " km/h",
-          label: "Wind Speed",
-        };
-      }
-
-      // Fallback if no time series data
+      // Use wind speed directly from weatherData since it's always available
       return {
-        value: 0,
-        unit: " km/h",
+        value: polygon.weatherData.windSpeed || 0,
+        unit: " m/s",
         label: "Wind Speed",
       };
     }
@@ -151,8 +124,17 @@ export function PolygonList() {
                     ? "text-blue-600 bg-blue-50 hover:bg-blue-100"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
+                title={
+                  editingPolygon === polygon.id
+                    ? "Save changes"
+                    : "Edit polygon"
+                }
               >
-                <Edit3 className="h-3 w-3" />
+                {editingPolygon === polygon.id ? (
+                  <Save className="h-3 w-3" />
+                ) : (
+                  <Edit3 className="h-3 w-3" />
+                )}
               </Button>
               <Button
                 size="sm"
@@ -182,7 +164,11 @@ export function PolygonList() {
                           polygon,
                           polygon.dataSource
                         );
-                        if (weatherData) {
+                        if (
+                          weatherData &&
+                          weatherData.value !== null &&
+                          weatherData.value !== undefined
+                        ) {
                           return (
                             <div
                               style={{

@@ -14,24 +14,27 @@ export default function Dashboard() {
 
       <div className="h-screen flex flex-col">
         {/* Header */}
-        <header className="border-b bg-background p-3 shrink-0">
+        {/* <header className="border-b bg-background p-3 shrink-0">
           <h1 className="text-xl font-bold">MWV Weather Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             Interactive weather data visualization with polygon analysis
           </p>
-        </header>
+        </header> */}
 
         {/* Timeline Slider */}
-        <div className="border-b bg-background p-3 shrink-0">
-          <TimelineSlider />
-        </div>
 
         {/* Main Content */}
         <div className="flex-1 flex min-h-0">
           {/* Map Area */}
-          <div className="flex-1 relative min-h-0">
-            <MapComponent />
-            {/* <Map /> */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Timeline Slider */}
+            <div className="border-b bg-background p-3 shrink-0">
+              <TimelineSlider />
+            </div>
+            {/* Map Component */}
+            <div className="flex-1 relative">
+              <MapComponent />
+            </div>
           </div>
 
           {/* Sidebar */}

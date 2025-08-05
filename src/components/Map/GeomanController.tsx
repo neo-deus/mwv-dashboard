@@ -154,6 +154,60 @@ export function GeomanController() {
                 weight: 2,
               });
 
+              // Update the popup with actual weather data
+              const activeDataSource = dataSources.find(
+                (ds) => ds.id === activeDataSourceId
+              );
+              let weatherInfo = "";
+              if (updatedPolygon.weatherData && activeDataSource) {
+                if (activeDataSource.id === "temperature") {
+                  weatherInfo = `
+                    <p style="margin: 4px 0; font-weight: bold; color: ${
+                      updatedPolygon.color
+                    };">
+                      Temperature: ${updatedPolygon.weatherData.temperature.toFixed(
+                        1
+                      )}°C
+                    </p>`;
+                } else if (activeDataSource.id === "windspeed") {
+                  weatherInfo = `
+                    <p style="margin: 4px 0; font-weight: bold; color: ${
+                      updatedPolygon.color
+                    };">
+                      Wind Speed: ${updatedPolygon.weatherData.windSpeed.toFixed(
+                        1
+                      )} m/s
+                    </p>`;
+                }
+                weatherInfo += `
+                  <p style="margin: 4px 0; font-size: 12px; color: #666;">
+                    Updated: ${new Date(
+                      updatedPolygon.weatherData.timestamp
+                    ).toLocaleTimeString()}
+                  </p>`;
+              } else {
+                weatherInfo = `<p style="margin: 4px 0; color: #999;">Weather data loading...</p>`;
+              }
+
+              // Update popup content
+              const popup = layer.getPopup();
+              if (popup) {
+                popup.setContent(`
+                  <div>
+                    <h3 style="font-weight: bold; margin: 0 0 8px 0;">${updatedPolygon.name}</h3>
+                    <p style="margin: 4px 0;">Data Source: ${updatedPolygon.dataSource}</p>
+                    <p style="margin: 4px 0;">Points: ${coordinates.length}</p>
+                    ${weatherInfo}
+                    <button 
+                      onclick="window.deletePolygon('${updatedPolygon.id}')" 
+                      style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                `);
+              }
+
               console.log(
                 `✅ Polygon ${updatedPolygon.name} setup complete with timeline data`
               );
@@ -174,7 +228,33 @@ export function GeomanController() {
         // 7. Disable editing by default - user must click Edit button to enable
         layer.pm.disable();
 
-        // 8. Add edit event handlers to the newly created layer
+        // 8. Add ESSENTIAL click and popup handlers that make the polygon interactive
+        // This is what was missing - newly created polygons need these handlers!
+
+        // Add click handler for polygon selection (like PolygonRenderer does)
+        layer.on("click", () => {
+          console.log(`Polygon ${newPolygon.id} clicked - setting as selected`);
+          const { setSelectedPolygon } = useDashboardStore.getState();
+          setSelectedPolygon(newPolygon.id);
+        });
+
+        // Add initial popup (will be updated when weather data arrives)
+        layer.bindPopup(`
+          <div>
+            <h3 style="font-weight: bold; margin: 0 0 8px 0;">${newPolygon.name}</h3>
+            <p style="margin: 4px 0;">Data Source: ${newPolygon.dataSource}</p>
+            <p style="margin: 4px 0;">Points: ${coordinates.length}</p>
+            <p style="margin: 4px 0; color: #999;">Weather data loading...</p>
+            <button 
+              onclick="window.deletePolygon('${newPolygon.id}')" 
+              style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;"
+            >
+              Delete
+            </button>
+          </div>
+        `);
+
+        // 9. Add edit event handlers to the newly created layer
         layer.on("pm:edit", () => {
           console.log(
             `🔥 GeomanController: Edit event on new polygon ${newPolygon.id}`

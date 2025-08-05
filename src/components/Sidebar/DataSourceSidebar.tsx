@@ -21,9 +21,9 @@ export function DataSourceSidebar() {
   } = useDashboardStore();
 
   // Log current active data source for debugging
-  console.log(
-    `🎯 DataSourceSidebar - Current active data source: ${activeDataSourceId}`
-  );
+  // console.log(
+  //   `🎯 DataSourceSidebar - Current active data source: ${activeDataSourceId}`
+  // );
 
   const [activeTab, setActiveTab] = useState<"polygons" | "rules" | "sources">(
     "polygons"
@@ -31,18 +31,18 @@ export function DataSourceSidebar() {
 
   // Refresh polygon colors when active data source changes
   useEffect(() => {
-    console.log(
-      `🔄 Active data source changed, refreshing polygon colors for: ${activeDataSourceId}`
-    );
+    // console.log(
+    //   `🔄 Active data source changed, refreshing polygon colors for: ${activeDataSourceId}`
+    // );
 
     // Update colors based on timeline and new data source
     if (timeline.selectedTime) {
-      console.log(
-        `🎨 Updating polygon colors for timeline: ${timeline.selectedTime.toISOString()}`
-      );
+      // console.log(
+      //   `🎨 Updating polygon colors for timeline: ${timeline.selectedTime.toISOString()}`
+      // );
       updatePolygonColorsForTime(timeline.selectedTime);
     } else {
-      console.log(`⏰ No timeline selected, using current time`);
+      // console.log(`⏰ No timeline selected, using current time`);
       // If no timeline is selected, use current time
       updatePolygonColorsForTime(new Date());
     }
@@ -166,9 +166,9 @@ export function DataSourceSidebar() {
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    {/* <span className="text-xs text-muted-foreground">
                       {source.field}
-                    </span>
+                    </span> */}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {source.rules.length} color rules defined
@@ -176,17 +176,10 @@ export function DataSourceSidebar() {
                 </div>
               ))}
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-3"
-                disabled
-              >
-                Add Data Source (Bonus Feature)
-              </Button>
+              
 
               {/* Debug/Migration Button */}
-              <Button
+              {/* <Button
                 variant="outline"
                 size="sm"
                 className="w-full mt-2"
@@ -196,18 +189,18 @@ export function DataSourceSidebar() {
                 }}
               >
                 🔄 Reset to Defaults (Debug)
-              </Button>
+              </Button> */}
             </Card>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t bg-muted/50">
+      {/* <div className="p-4 border-t bg-muted/50">
         <div className="text-xs text-muted-foreground text-center">
           MWV Weather Dashboard v1.0
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -65,7 +65,7 @@ export async function fetchPolygonWeatherData(
       color: dynamicColor,
       weatherData: {
         temperature: weatherData.temperature,
-        windSpeed: weatherData.windSpeed, // Store wind speed for wind speed data source
+        windSpeed: weatherData.windSpeed || 0, // Store wind speed, default to 0 if undefined
         timestamp: weatherData.timestamp,
         centroid: centroid,
       },

@@ -9,7 +9,7 @@ export interface Polygon {
   createdAt: Date | string; // Allow both Date objects and date strings (for persistence)
   weatherData?: {
     temperature: number;
-    windSpeed?: number; // Add wind speed to polygon weather data
+    windSpeed: number; // Wind speed is always available from the API
     timestamp: string;
     centroid: [number, number]; // Store the centroid used for weather fetch
   };
