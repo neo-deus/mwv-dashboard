@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMap } from "react-leaflet";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import {
   fetchPolygonWeatherData,
   fetchPolygonTimeSeries,
 } from "@/services/polygonWeatherService";
+import { PolygonNameModal } from "@/components/ui/polygon-name-modal";
 import * as L from "leaflet";
 
 // Type definitions for Geoman events
@@ -41,6 +42,280 @@ export function GeomanController() {
     activeDataSourceId,
   } = useDashboardStore();
 
+  // Modal state for polygon naming
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    layer: L.Polygon | null;
+    coordinates: [number, number][];
+    vertexCount: number;
+  }>({
+    isOpen: false,
+    layer: null,
+    coordinates: [],
+    vertexCount: 0,
+  });
+
+  const handleModalConfirm = (name: string) => {
+    const { layer, coordinates } = modalState;
+    if (!layer || !coordinates.length) return;
+
+    createPolygonWithName(layer, coordinates, name);
+    setModalState({
+      isOpen: false,
+      layer: null,
+      coordinates: [],
+      vertexCount: 0,
+    });
+  };
+
+  const handleModalCancel = () => {
+    const { layer } = modalState;
+    if (layer) {
+      map.removeLayer(layer);
+    }
+    setModalState({
+      isOpen: false,
+      layer: null,
+      coordinates: [],
+      vertexCount: 0,
+    });
+  };
+
+  // --- Event Handler for EDITING Polygons ---
+  const handleEdit = (e: GeomanEditEvent) => {
+    console.log("🔥 GeomanController: pm:edit event", e);
+    const { layer } = e;
+
+    if (
+      layer instanceof L.Polygon &&
+      (layer as ExtendedLayer).isCustomPolygon
+    ) {
+      const polygonId = (layer as ExtendedLayer)._polygonId;
+      if (!polygonId) {
+        console.warn("No polygon ID found on edited layer");
+        return;
+      }
+
+      const latlngs = layer.getLatLngs()[0] as L.LatLng[];
+      console.log(
+        `Editing polygon ${polygonId} with ${latlngs.length} vertices`
+      );
+
+      // Validate on edit
+      if (latlngs.length < 3 || latlngs.length > 12) {
+        alert(
+          `Polygons must have between 3 and 12 vertices. Yours has ${latlngs.length}. Edit rejected.`
+        );
+
+        // Find the original coordinates from the store and revert
+        const originalPolygon = polygons.find((p) => p.id === polygonId);
+        if (originalPolygon) {
+          const originalLatLngs = originalPolygon.coordinates.map((c) =>
+            L.latLng(c[0], c[1])
+          );
+          layer.setLatLngs(originalLatLngs);
+        }
+        return;
+      }
+
+      const newCoordinates: [number, number][] = latlngs.map((latlng) => [
+        latlng.lat,
+        latlng.lng,
+      ]);
+
+      // Close the polygon by adding the first point at the end for proper polygon storage
+      if (newCoordinates.length > 0) {
+        newCoordinates.push(newCoordinates[0]);
+      }
+
+      // Update the polygon in our store
+      updatePolygon(polygonId, { coordinates: newCoordinates });
+      console.log(
+        `✅ Polygon ${polygonId} updated in store with new coordinates`
+      );
+    }
+  };
+
+  const createPolygonWithName = (
+    layer: L.Polygon,
+    coordinates: [number, number][],
+    name: string
+  ) => {
+    // 4. Create polygon with temporary color, then fetch weather data
+    const newPolygon = addPolygon({
+      name,
+      coordinates,
+      dataSource: activeDataSourceId, // Use active data source
+      color: "#9ca3af", // Temporary gray color
+    });
+
+    // 5. CRITICAL: Store the polygon ID in the layer so we can track it
+    (layer as ExtendedLayer)._polygonId = newPolygon.id;
+    (layer as ExtendedLayer).isCustomPolygon = true;
+
+    // 6. Apply temporary styling while fetching weather data
+    layer.setStyle({
+      color: "#9ca3af",
+      fillColor: "#9ca3af",
+      fillOpacity: 0.3,
+      weight: 2,
+    });
+
+    // 7. Fetch weather data and time series data for timeline functionality
+    const activeDataSource = dataSources.find(
+      (ds) => ds.id === activeDataSourceId
+    );
+    if (activeDataSource) {
+      console.log(
+        `Fetching ${activeDataSource.name.toLowerCase()} data and time series for new polygon: ${
+          newPolygon.name
+        }`
+      );
+
+      // Fetch both current weather and time series data
+      Promise.all([
+        fetchPolygonWeatherData(newPolygon, activeDataSource),
+        fetchPolygonTimeSeries(newPolygon),
+      ])
+        .then(([updatedPolygon, polygonWithTimeSeries]) => {
+          console.log(
+            `Weather data fetched for ${updatedPolygon.name}: ${updatedPolygon.weatherData?.temperature}°C`
+          );
+          console.log(
+            `Time series data fetched for ${polygonWithTimeSeries.name}: ${polygonWithTimeSeries.timeSeriesData?.data.length} points`
+          );
+
+          // Update the polygon in store with both weather data and time series data
+          updatePolygon(updatedPolygon.id, {
+            color: updatedPolygon.color,
+            weatherData: updatedPolygon.weatherData,
+            timeSeriesData: polygonWithTimeSeries.timeSeriesData,
+          });
+
+          // Update the visual layer styling
+          layer.setStyle({
+            color: updatedPolygon.color,
+            fillColor: updatedPolygon.color,
+            fillOpacity: 0.5,
+            weight: 2,
+          });
+
+          // Update the popup with actual weather data
+          const activeDataSource = dataSources.find(
+            (ds) => ds.id === activeDataSourceId
+          );
+          let weatherInfo = "";
+          if (updatedPolygon.weatherData && activeDataSource) {
+            if (activeDataSource.id === "temperature") {
+              weatherInfo = `
+                <p style="margin: 4px 0; font-weight: bold; color: ${
+                  updatedPolygon.color
+                };">
+                  Temperature: ${updatedPolygon.weatherData.temperature.toFixed(
+                    1
+                  )}°C
+                </p>`;
+            } else if (activeDataSource.id === "windspeed") {
+              weatherInfo = `
+                <p style="margin: 4px 0; font-weight: bold; color: ${
+                  updatedPolygon.color
+                };">
+                  Wind Speed: ${updatedPolygon.weatherData.windSpeed.toFixed(
+                    1
+                  )} m/s
+                </p>`;
+            }
+            weatherInfo += `
+              <p style="margin: 4px 0; font-size: 12px; color: #666;">
+                Updated: ${new Date(
+                  updatedPolygon.weatherData.timestamp
+                ).toLocaleTimeString()}
+              </p>`;
+          } else {
+            weatherInfo = `<p style="margin: 4px 0; color: #999;">Weather data loading...</p>`;
+          }
+
+          // Update popup content
+          const popup = layer.getPopup();
+          if (popup) {
+            popup.setContent(`
+              <div>
+                <h3 style="font-weight: bold; margin: 0 0 8px 0;">${updatedPolygon.name}</h3>
+                <p style="margin: 4px 0;">Data Source: ${updatedPolygon.dataSource}</p>
+                <p style="margin: 4px 0;">Points: ${coordinates.length}</p>
+                ${weatherInfo}
+                <button 
+                  onclick="window.deletePolygon('${updatedPolygon.id}')" 
+                  style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                >
+                  Delete
+                </button>
+              </div>
+            `);
+          }
+
+          console.log(
+            `✅ Polygon ${updatedPolygon.name} setup complete with timeline data`
+          );
+        })
+        .catch((error) => {
+          console.error(
+            `Failed to fetch complete weather data for ${newPolygon.name}:`,
+            error
+          );
+          // Keep the gray color if weather fetch fails
+        });
+    } else {
+      console.warn("Temperature data source not found, using default color");
+    }
+
+    // 8. Disable editing by default - user must click Edit button to enable
+    layer.pm.disable();
+
+    // 9. Add ESSENTIAL click and popup handlers that make the polygon interactive
+    // This is what was missing - newly created polygons need these handlers!
+
+    // Add click handler for polygon selection (like PolygonRenderer does)
+    layer.on("click", () => {
+      console.log(`Polygon ${newPolygon.id} clicked - setting as selected`);
+      const { setSelectedPolygon } = useDashboardStore.getState();
+      setSelectedPolygon(newPolygon.id);
+    });
+
+    // Add initial popup (will be updated when weather data arrives)
+    layer.bindPopup(`
+      <div>
+        <h3 style="font-weight: bold; margin: 0 0 8px 0;">${newPolygon.name}</h3>
+        <p style="margin: 4px 0;">Data Source: ${newPolygon.dataSource}</p>
+        <p style="margin: 4px 0;">Points: ${coordinates.length}</p>
+        <p style="margin: 4px 0; color: #999;">Weather data loading...</p>
+        <button 
+          onclick="window.deletePolygon('${newPolygon.id}')" 
+          style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;"
+        >
+          Delete
+        </button>
+      </div>
+    `);
+
+    // 10. Add edit event handlers to the newly created layer
+    layer.on("pm:edit", () => {
+      console.log(
+        `🔥 GeomanController: Edit event on new polygon ${newPolygon.id}`
+      );
+      handleEdit({ layer });
+    });
+
+    layer.on("pm:markerdragend", () => {
+      console.log(
+        `🔥 GeomanController: Vertex drag on new polygon ${newPolygon.id}`
+      );
+      handleEdit({ layer });
+    });
+
+    console.log(`Polygon created and stored with ID: ${newPolygon.id}`);
+  };
+
   useEffect(() => {
     if (!map || !(map as L.Map & { pm?: unknown }).pm) return;
 
@@ -67,6 +342,7 @@ export function GeomanController() {
 
         // 1. Validate Vertex Count
         if (latlngs.length < 3 || latlngs.length > 12) {
+          // Show alert modal instead of browser alert
           alert(
             `Polygons must have between 3 and 12 vertices. Yours has ${latlngs.length}.`
           );
@@ -74,17 +350,7 @@ export function GeomanController() {
           return;
         }
 
-        // 2. Prompt for name
-        const name = prompt(
-          "Enter polygon name:",
-          `Polygon ${polygons.length + 1}`
-        );
-        if (!name) {
-          map.removeLayer(layer);
-          return;
-        }
-
-        // 3. Convert coordinates for storing
+        // 2. Convert coordinates for storing
         const coordinates: [number, number][] = latlngs.map((latlng) => [
           latlng.lat,
           latlng.lng,
@@ -95,239 +361,13 @@ export function GeomanController() {
           coordinates.push(coordinates[0]);
         }
 
-        // 4. Create polygon with temporary color, then fetch weather data
-        const newPolygon = addPolygon({
-          name,
+        // 3. Open modal for name input instead of prompt
+        setModalState({
+          isOpen: true,
+          layer,
           coordinates,
-          dataSource: activeDataSourceId, // Use active data source
-          color: "#9ca3af", // Temporary gray color
+          vertexCount: latlngs.length,
         });
-
-        // 5. CRITICAL: Store the polygon ID in the layer so we can track it
-        (layer as ExtendedLayer)._polygonId = newPolygon.id;
-        (layer as ExtendedLayer).isCustomPolygon = true;
-
-        // 6. Apply temporary styling while fetching weather data
-        layer.setStyle({
-          color: "#9ca3af",
-          fillColor: "#9ca3af",
-          fillOpacity: 0.3,
-          weight: 2,
-        });
-
-        // 7. Fetch weather data and time series data for timeline functionality
-        const activeDataSource = dataSources.find(
-          (ds) => ds.id === activeDataSourceId
-        );
-        if (activeDataSource) {
-          console.log(
-            `Fetching ${activeDataSource.name.toLowerCase()} data and time series for new polygon: ${
-              newPolygon.name
-            }`
-          );
-
-          // Fetch both current weather and time series data
-          Promise.all([
-            fetchPolygonWeatherData(newPolygon, activeDataSource),
-            fetchPolygonTimeSeries(newPolygon),
-          ])
-            .then(([updatedPolygon, polygonWithTimeSeries]) => {
-              console.log(
-                `Weather data fetched for ${updatedPolygon.name}: ${updatedPolygon.weatherData?.temperature}°C`
-              );
-              console.log(
-                `Time series data fetched for ${polygonWithTimeSeries.name}: ${polygonWithTimeSeries.timeSeriesData?.data.length} points`
-              );
-
-              // Update the polygon in store with both weather data and time series data
-              updatePolygon(updatedPolygon.id, {
-                color: updatedPolygon.color,
-                weatherData: updatedPolygon.weatherData,
-                timeSeriesData: polygonWithTimeSeries.timeSeriesData,
-              });
-
-              // Update the visual layer styling
-              layer.setStyle({
-                color: updatedPolygon.color,
-                fillColor: updatedPolygon.color,
-                fillOpacity: 0.5,
-                weight: 2,
-              });
-
-              // Update the popup with actual weather data
-              const activeDataSource = dataSources.find(
-                (ds) => ds.id === activeDataSourceId
-              );
-              let weatherInfo = "";
-              if (updatedPolygon.weatherData && activeDataSource) {
-                if (activeDataSource.id === "temperature") {
-                  weatherInfo = `
-                    <p style="margin: 4px 0; font-weight: bold; color: ${
-                      updatedPolygon.color
-                    };">
-                      Temperature: ${updatedPolygon.weatherData.temperature.toFixed(
-                        1
-                      )}°C
-                    </p>`;
-                } else if (activeDataSource.id === "windspeed") {
-                  weatherInfo = `
-                    <p style="margin: 4px 0; font-weight: bold; color: ${
-                      updatedPolygon.color
-                    };">
-                      Wind Speed: ${updatedPolygon.weatherData.windSpeed.toFixed(
-                        1
-                      )} m/s
-                    </p>`;
-                }
-                weatherInfo += `
-                  <p style="margin: 4px 0; font-size: 12px; color: #666;">
-                    Updated: ${new Date(
-                      updatedPolygon.weatherData.timestamp
-                    ).toLocaleTimeString()}
-                  </p>`;
-              } else {
-                weatherInfo = `<p style="margin: 4px 0; color: #999;">Weather data loading...</p>`;
-              }
-
-              // Update popup content
-              const popup = layer.getPopup();
-              if (popup) {
-                popup.setContent(`
-                  <div>
-                    <h3 style="font-weight: bold; margin: 0 0 8px 0;">${updatedPolygon.name}</h3>
-                    <p style="margin: 4px 0;">Data Source: ${updatedPolygon.dataSource}</p>
-                    <p style="margin: 4px 0;">Points: ${coordinates.length}</p>
-                    ${weatherInfo}
-                    <button 
-                      onclick="window.deletePolygon('${updatedPolygon.id}')" 
-                      style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                `);
-              }
-
-              console.log(
-                `✅ Polygon ${updatedPolygon.name} setup complete with timeline data`
-              );
-            })
-            .catch((error) => {
-              console.error(
-                `Failed to fetch complete weather data for ${newPolygon.name}:`,
-                error
-              );
-              // Keep the gray color if weather fetch fails
-            });
-        } else {
-          console.warn(
-            "Temperature data source not found, using default color"
-          );
-        }
-
-        // 7. Disable editing by default - user must click Edit button to enable
-        layer.pm.disable();
-
-        // 8. Add ESSENTIAL click and popup handlers that make the polygon interactive
-        // This is what was missing - newly created polygons need these handlers!
-
-        // Add click handler for polygon selection (like PolygonRenderer does)
-        layer.on("click", () => {
-          console.log(`Polygon ${newPolygon.id} clicked - setting as selected`);
-          const { setSelectedPolygon } = useDashboardStore.getState();
-          setSelectedPolygon(newPolygon.id);
-        });
-
-        // Add initial popup (will be updated when weather data arrives)
-        layer.bindPopup(`
-          <div>
-            <h3 style="font-weight: bold; margin: 0 0 8px 0;">${newPolygon.name}</h3>
-            <p style="margin: 4px 0;">Data Source: ${newPolygon.dataSource}</p>
-            <p style="margin: 4px 0;">Points: ${coordinates.length}</p>
-            <p style="margin: 4px 0; color: #999;">Weather data loading...</p>
-            <button 
-              onclick="window.deletePolygon('${newPolygon.id}')" 
-              style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;"
-            >
-              Delete
-            </button>
-          </div>
-        `);
-
-        // 9. Add edit event handlers to the newly created layer
-        layer.on("pm:edit", () => {
-          console.log(
-            `🔥 GeomanController: Edit event on new polygon ${newPolygon.id}`
-          );
-          handleEdit({ layer });
-        });
-
-        layer.on("pm:markerdragend", () => {
-          console.log(
-            `🔥 GeomanController: Vertex drag on new polygon ${newPolygon.id}`
-          );
-          handleEdit({ layer });
-        });
-
-        console.log(`Polygon created and stored with ID: ${newPolygon.id}`);
-
-        // DON'T remove the layer - let Geoman manage it for editing
-        // This is the key difference from our previous approach
-      }
-    };
-
-    // --- Event Listener for EDITING Polygons ---
-    const handleEdit = (e: GeomanEditEvent) => {
-      console.log("🔥 GeomanController: pm:edit event", e);
-      const { layer } = e;
-
-      if (
-        layer instanceof L.Polygon &&
-        (layer as ExtendedLayer).isCustomPolygon
-      ) {
-        const polygonId = (layer as ExtendedLayer)._polygonId;
-        if (!polygonId) {
-          console.warn("No polygon ID found on edited layer");
-          return;
-        }
-
-        const latlngs = layer.getLatLngs()[0] as L.LatLng[];
-        console.log(
-          `Editing polygon ${polygonId} with ${latlngs.length} vertices`
-        );
-
-        // Validate on edit
-        if (latlngs.length < 3 || latlngs.length > 12) {
-          alert(
-            `Polygons must have between 3 and 12 vertices. Yours has ${latlngs.length}. Edit rejected.`
-          );
-
-          // Find the original coordinates from the store and revert
-          const originalPolygon = polygons.find((p) => p.id === polygonId);
-          if (originalPolygon) {
-            const originalLatLngs = originalPolygon.coordinates.map((c) =>
-              L.latLng(c[0], c[1])
-            );
-            layer.setLatLngs(originalLatLngs);
-          }
-          return;
-        }
-
-        const newCoordinates: [number, number][] = latlngs.map((latlng) => [
-          latlng.lat,
-          latlng.lng,
-        ]);
-
-        // Close the polygon by adding the first point at the end for proper polygon storage
-        if (newCoordinates.length > 0) {
-          newCoordinates.push(newCoordinates[0]);
-        }
-
-        // Update the polygon in our store
-        updatePolygon(polygonId, { coordinates: newCoordinates });
-        console.log(
-          `✅ Polygon ${polygonId} updated in store with new coordinates`
-        );
       }
     };
 
@@ -422,5 +462,15 @@ export function GeomanController() {
     });
   }, [map, editingPolygon]);
 
-  return null; // This component does not render anything itself
+  return (
+    <>
+      <PolygonNameModal
+        isOpen={modalState.isOpen}
+        onClose={handleModalCancel}
+        onConfirm={handleModalConfirm}
+        defaultName={`Polygon ${polygons.length + 1}`}
+        vertexCount={modalState.vertexCount}
+      />
+    </>
+  );
 }

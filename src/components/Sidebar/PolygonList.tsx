@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDashboardStore } from "@/stores/dashboardStore";
@@ -16,7 +17,43 @@ export function PolygonList() {
     editingPolygon,
     setEditingPolygon,
     activeDataSourceId,
+    updatePolygon,
   } = useDashboardStore();
+
+  // State for editing polygon names
+  const [editingNames, setEditingNames] = useState<Record<string, string>>({});
+
+  const handleStartNameEdit = (polygon: any) => {
+    setEditingNames((prev) => ({
+      ...prev,
+      [polygon.id]: polygon.name,
+    }));
+  };
+
+  const handleNameChange = (polygonId: string, newName: string) => {
+    setEditingNames((prev) => ({
+      ...prev,
+      [polygonId]: newName,
+    }));
+  };
+
+  const handleSaveNameEdit = (polygonId: string) => {
+    const newName = editingNames[polygonId];
+    if (newName && newName.trim()) {
+      updatePolygon(polygonId, { name: newName.trim() });
+    }
+    setEditingNames((prev) => {
+      const { [polygonId]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const handleCancelNameEdit = (polygonId: string) => {
+    setEditingNames((prev) => {
+      const { [polygonId]: _, ...rest } = prev;
+      return rest;
+    });
+  };
 
   const getDataSourceName = (id: string) => {
     return dataSources.find((ds) => ds.id === id)?.name || "Unknown";
@@ -94,9 +131,26 @@ export function PolygonList() {
                   className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: polygon.color }}
                 />
-                <h4 className="font-medium text-sm truncate">{polygon.name}</h4>
-              </div>
-
+                {editingPolygon === polygon.id ? (
+                  <input
+                    type="text"
+                    value={editingNames[polygon.id] || polygon.name}
+                    onChange={(e) =>
+                      handleNameChange(polygon.id, e.target.value)
+                    }
+                    className="flex-1 px-2 py-1 text-sm mr-4 border rounded bg-background text-foreground border-border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter polygon name..."
+                  />
+                ) : (
+                  <h4
+                    className="font-medium text-sm truncate cursor-pointer hover:text-blue-600 flex-1"
+                    onClick={() => handleStartNameEdit(polygon)}
+                    title="Click edit button to modify name"
+                  >
+                    {polygon.name}
+                  </h4>
+                )}
+              </div>{" "}
               {/* Details */}
               <div className="space-y-1 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
@@ -115,9 +169,16 @@ export function PolygonList() {
                 variant="ghost"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setEditingPolygon(
-                    editingPolygon === polygon.id ? undefined : polygon.id
-                  );
+
+                  // If currently editing and switching to save mode, save the name
+                  if (editingPolygon === polygon.id) {
+                    handleSaveNameEdit(polygon.id);
+                    setEditingPolygon(undefined);
+                  } else {
+                    // Entering edit mode - initialize name editing
+                    handleStartNameEdit(polygon);
+                    setEditingPolygon(polygon.id);
+                  }
                 }}
                 className={`h-6 w-6 p-0 ${
                   editingPolygon === polygon.id
@@ -126,8 +187,8 @@ export function PolygonList() {
                 }`}
                 title={
                   editingPolygon === polygon.id
-                    ? "Save changes"
-                    : "Edit polygon"
+                    ? "Save changes (geometry & name)"
+                    : "Edit polygon (geometry & name)"
                 }
               >
                 {editingPolygon === polygon.id ? (
