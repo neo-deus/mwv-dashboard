@@ -1,6 +1,4 @@
-/**
- * Weather service for fetching data from Open-Meteo API
- */
+
 
 export interface WeatherData {
   temperature: number;
@@ -42,12 +40,7 @@ export interface OpenMeteoForecastResponse {
   };
 }
 
-/**
- * Fetch current weather data from Open-Meteo API
- * @param lat Latitude
- * @param lng Longitude
- * @returns Promise<WeatherData>
- */
+
 export async function fetchWeatherData(
   lat: number,
   lng: number
@@ -86,13 +79,7 @@ export async function fetchWeatherData(
   }
 }
 
-/**
- * Fetch weather data with retry mechanism
- * @param lat Latitude
- * @param lng Longitude
- * @param maxRetries Maximum number of retry attempts
- * @returns Promise<WeatherData>
- */
+
 export async function fetchWeatherDataWithRetry(
   lat: number,
   lng: number,
@@ -121,18 +108,12 @@ export async function fetchWeatherDataWithRetry(
   throw lastError!;
 }
 
-/**
- * Fetch historical weather data (past 15 days)
- * @param lat Latitude
- * @param lng Longitude
- * @returns Promise<TimeSeriesWeatherData[]>
- */
+
 export async function fetchHistoricalWeatherData(
   lat: number,
   lng: number
 ): Promise<TimeSeriesWeatherData[]> {
   try {
-    // Calculate date range: 15 days ago to today
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - 15);
@@ -164,7 +145,6 @@ export async function fetchHistoricalWeatherData(
 
     const data: OpenMeteoHistoricalResponse = await response.json();
 
-    // Convert to our format
     const weatherData: TimeSeriesWeatherData[] = data.hourly.time.map(
       (time, index) => ({
         timestamp: time,
@@ -188,12 +168,7 @@ export async function fetchHistoricalWeatherData(
   }
 }
 
-/**
- * Fetch forecast weather data (next 15 days)
- * @param lat Latitude
- * @param lng Longitude
- * @returns Promise<TimeSeriesWeatherData[]>
- */
+
 export async function fetchForecastWeatherData(
   lat: number,
   lng: number
@@ -215,7 +190,6 @@ export async function fetchForecastWeatherData(
 
     const data: OpenMeteoForecastResponse = await response.json();
 
-    // Convert to our format
     const weatherData: TimeSeriesWeatherData[] = data.hourly.time.map(
       (time, index) => ({
         timestamp: time,
@@ -239,12 +213,7 @@ export async function fetchForecastWeatherData(
   }
 }
 
-/**
- * Fetch complete time series data (15 days past + 15 days forecast)
- * @param lat Latitude
- * @param lng Longitude
- * @returns Promise<TimeSeriesWeatherData[]>
- */
+
 export async function fetchCompleteWeatherTimeSeries(
   lat: number,
   lng: number
@@ -262,10 +231,8 @@ export async function fetchCompleteWeatherTimeSeries(
     console.log(`📊 Historical data points: ${historicalData.length}`);
     console.log(`📈 Forecast data points: ${forecastData.length}`);
 
-    // Combine historical and forecast data
     const completeData = [...historicalData, ...forecastData];
 
-    // Sort by timestamp to ensure correct order
     completeData.sort(
       (a, b) =>
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()

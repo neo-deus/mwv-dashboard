@@ -6,15 +6,12 @@ const OPEN_METEO_BASE_URL = "https://archive-api.open-meteo.com/v1/archive";
 export interface WeatherQueryParams {
   latitude: number;
   longitude: number;
-  startDate: string; // YYYY-MM-DD format
-  endDate: string; // YYYY-MM-DD format
-  hourly: string[]; // Array of variables like ['temperature_2m']
+  startDate: string;
+  endDate: string;
+  hourly: string[];
 }
 
 export const weatherApi = {
-  /**
-   * Fetch weather data from Open-Meteo API
-   */
   async fetchWeatherData(params: WeatherQueryParams): Promise<WeatherData> {
     try {
       const response = await axios.get(OPEN_METEO_BASE_URL, {
@@ -34,16 +31,13 @@ export const weatherApi = {
     }
   },
 
-  /**
-   * Get weather data for a specific polygon centroid
-   */
+
   async getPolygonWeatherData(
     coordinates: [number, number][],
     startDate: string,
     endDate: string,
     variables: string[] = ["temperature_2m"]
   ): Promise<WeatherData> {
-    // Calculate centroid of polygon
     const centroid = this.calculateCentroid(coordinates);
 
     return this.fetchWeatherData({
@@ -55,9 +49,6 @@ export const weatherApi = {
     });
   },
 
-  /**
-   * Calculate centroid of a polygon
-   */
   calculateCentroid(coordinates: [number, number][]): [number, number] {
     if (coordinates.length === 0) {
       return [0, 0];
@@ -71,9 +62,6 @@ export const weatherApi = {
     return [sum[0] / coordinates.length, sum[1] / coordinates.length];
   },
 
-  /**
-   * Get weather value for a specific hour
-   */
   getValueForHour(
     weatherData: WeatherData,
     targetHour: Date,
@@ -92,16 +80,10 @@ export const weatherApi = {
     return fieldData ? fieldData[hourIndex] : null;
   },
 
-  /**
-   * Format date for API calls (YYYY-MM-DD)
-   */
   formatDate(date: Date): string {
     return date.toISOString().split("T")[0];
   },
 
-  /**
-   * Get date range for timeline (15 days before and after today)
-   */
   getTimelineRange(): { startDate: string; endDate: string } {
     const today = new Date();
     const start = new Date(today);

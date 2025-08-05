@@ -1,12 +1,3 @@
-/**
- * Utility functions for polygon operations
- */
-
-/**
- * Calculate the centroid (geometric center) of a polygon
- * @param coordinates Array of [lat, lng] coordinates
- * @returns [lat, lng] of the centroid
- */
 export function calculatePolygonCentroid(
   coordinates: [number, number][]
 ): [number, number] {
@@ -14,7 +5,6 @@ export function calculatePolygonCentroid(
     throw new Error("Cannot calculate centroid of empty polygon");
   }
 
-  // Remove the last coordinate if it's a duplicate of the first (closed polygon)
   let coords = [...coordinates];
   if (
     coords.length > 1 &&
@@ -24,7 +14,6 @@ export function calculatePolygonCentroid(
     coords = coords.slice(0, -1);
   }
 
-  // Calculate centroid using the shoelace formula
   let area = 0;
   let centroidLat = 0;
   let centroidLng = 0;
@@ -43,7 +32,6 @@ export function calculatePolygonCentroid(
   area = area / 2;
 
   if (Math.abs(area) < 1e-10) {
-    // Fallback to simple average for degenerate polygons
     const avgLat =
       coords.reduce((sum, coord) => sum + coord[0], 0) / coords.length;
     const avgLng =
@@ -57,11 +45,7 @@ export function calculatePolygonCentroid(
   return [centroidLat, centroidLng];
 }
 
-/**
- * Calculate the bounding box center (alternative approach)
- * @param coordinates Array of [lat, lng] coordinates
- * @returns [lat, lng] of the bounding box center
- */
+
 export function calculateBoundingBoxCenter(
   coordinates: [number, number][]
 ): [number, number] {

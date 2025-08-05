@@ -3,15 +3,10 @@
 import { useEffect } from "react";
 import { useDashboardStore } from "@/stores/dashboardStore";
 
-/**
- * Component that handles data migrations for the dashboard store
- * This ensures that new data sources are added to existing localStorage data
- */
 export function MigrationHelper() {
   const { migrateDataSources, dataSources } = useDashboardStore();
 
   useEffect(() => {
-    // Check if we need to migrate data sources
     const hasWindSpeed = dataSources.some((ds) => ds.id === "windspeed");
 
     if (!hasWindSpeed) {
@@ -22,5 +17,5 @@ export function MigrationHelper() {
     }
   }, [migrateDataSources, dataSources]);
 
-  return null; // This component only handles side effects
+  return null;
 }

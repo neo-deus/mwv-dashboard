@@ -20,16 +20,16 @@ const OPERATORS = [
 ] as const;
 
 const PRESET_COLORS = [
-  "#3b82f6", // Blue
-  "#22c55e", // Green
-  "#ef4444", // Red
-  "#f97316", // Orange
-  "#8b5cf6", // Purple
-  "#06b6d4", // Cyan
-  "#84cc16", // Lime
-  "#f59e0b", // Amber
-  "#ec4899", // Pink
-  "#64748b", // Gray
+  "#3b82f6",
+  "#22c55e", 
+  "#ef4444",
+  "#f97316", 
+  "#8b5cf6", 
+  "#06b6d4",
+  "#84cc16",
+  "#f59e0b", 
+  "#ec4899",
+  "#64748b",
 ];
 
 export function ColorRuleEditor({ dataSourceId }: ColorRuleEditorProps) {
@@ -73,7 +73,6 @@ export function ColorRuleEditor({ dataSourceId }: ColorRuleEditorProps) {
           key={rule.id}
           className="flex items-center gap-2 p-2 border rounded-lg"
         >
-          {/* Color indicator/picker */}
           <div className="relative">
             <div
               className="w-8 h-8 rounded border cursor-pointer"
@@ -117,12 +116,6 @@ export function ColorRuleEditor({ dataSourceId }: ColorRuleEditorProps) {
             )}
           </div>
 
-          {/* Field name */}
-          {/* <span className="text-sm font-medium min-w-0 flex-shrink-0">
-            {dataSource.field}
-          </span> */}
-
-          {/* Operator dropdown */}
           <select
             value={rule.operator}
             onChange={(e) =>
@@ -140,12 +133,10 @@ export function ColorRuleEditor({ dataSourceId }: ColorRuleEditorProps) {
                 className="bg-background text-foreground"
               >
                 {op.value}{" "}
-                {/* {op.value === ">=" ? "≥" : op.value === "<=" ? "≤" : ""} */}
               </option>
             ))}
           </select>
 
-          {/* Value input */}
           <input
             type="number"
             value={rule.value}
@@ -159,7 +150,6 @@ export function ColorRuleEditor({ dataSourceId }: ColorRuleEditorProps) {
             step="0.1"
           />
 
-          {/* Delete button */}
           <Button
             size="sm"
             variant="ghost"
@@ -171,7 +161,6 @@ export function ColorRuleEditor({ dataSourceId }: ColorRuleEditorProps) {
         </div>
       ))}
 
-      {/* Add Rule Button */}
       <Button variant="outline" size="sm" onClick={addRule} className="w-full">
         <Plus className="h-3 w-3 mr-1" />
         Add Color Rule

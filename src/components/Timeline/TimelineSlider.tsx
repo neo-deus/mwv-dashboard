@@ -13,14 +13,12 @@ import {
   dateToSliderValue,
 } from "@/utils/helpers";
 
-// Return type for TimelineSlider component
 interface TimelineSliderReturn {
   timelineComponent: React.ReactElement;
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-// Custom Slider with Tooltip
 function SliderWithTooltip({
   value,
   onValueChange,
@@ -42,7 +40,6 @@ function SliderWithTooltip({
   const [activeThumbIndex, setActiveThumbIndex] = useState(0);
   const [tooltipValue, setTooltipValue] = useState(value[0]);
 
-  // Update tooltip value when the slider value changes externally
   useEffect(() => {
     if (value.length > 1 && activeThumbIndex === 1) {
       setTooltipValue(value[1]);
@@ -52,7 +49,6 @@ function SliderWithTooltip({
   }, [value, activeThumbIndex]);
 
   const handleValueChange = (values: number[]) => {
-    // Determine which thumb is being moved
     const isStartChanged = values[0] !== value[0];
     const isEndChanged = values.length > 1 && values[1] !== value[1];
 
@@ -63,7 +59,6 @@ function SliderWithTooltip({
       setActiveThumbIndex(1);
       setTooltipValue(values[1]);
     } else {
-      // If it's the first value change or single value mode
       setActiveThumbIndex(0);
       setTooltipValue(values[0]);
     }
@@ -76,7 +71,6 @@ function SliderWithTooltip({
 
   return (
     <div className="relative">
-      {/* Tooltip */}
       {showTooltip && (
         <div
           className="absolute -top-12 bg-blue-600 dark:bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg z-10 transform -translate-x-1/2 whitespace-nowrap"
@@ -85,7 +79,6 @@ function SliderWithTooltip({
           }}
         >
           {tooltipText}
-          {/* Tooltip arrow */}
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-blue-600 dark:border-t-blue-500"></div>
         </div>
       )}
@@ -99,7 +92,6 @@ function SliderWithTooltip({
         className={className}
         onPointerDown={(e) => {
           setShowTooltip(true);
-          // Determine which thumb is being clicked based on mouse position
           const rect = e.currentTarget.getBoundingClientRect();
           const clickX = e.clientX - rect.left;
           const sliderWidth = rect.width;
@@ -107,7 +99,6 @@ function SliderWithTooltip({
           const clickValue = clickPercentage * max;
 
           if (value.length > 1) {
-            // For range mode, determine which thumb is closer to the click
             const distanceToStart = Math.abs(clickValue - value[0]);
             const distanceToEnd = Math.abs(clickValue - value[1]);
 
@@ -125,7 +116,6 @@ function SliderWithTooltip({
         }}
         onPointerUp={() => setShowTooltip(false)}
         onMouseEnter={() => {
-          // Set tooltip to the active thumb value when hovering
           if (value.length > 1 && activeThumbIndex === 1) {
             setTooltipValue(value[1]);
           } else {
@@ -148,12 +138,9 @@ export function TimelineSlider(): TimelineSliderReturn {
     updatePolygonColorsForTime,
   } = useDashboardStore();
 
-  // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(false);
-  // Mobile sidebar state
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // Initialize dark mode from localStorage and system preference
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     const systemPrefersDark = window.matchMedia(
@@ -169,7 +156,6 @@ export function TimelineSlider(): TimelineSliderReturn {
     }
   }, []);
 
-  // Toggle dark mode
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
@@ -183,7 +169,6 @@ export function TimelineSlider(): TimelineSliderReturn {
     }
   };
 
-  // Use state to avoid hydration issues with dates
   const [dateRange, setDateRange] = useState<{
     startDate: Date;
     endDate: Date;
@@ -191,7 +176,6 @@ export function TimelineSlider(): TimelineSliderReturn {
   } | null>(null);
 
   useEffect(() => {
-    // Generate 30-day timeline (15 days before and after today) on client side only
     const today = new Date();
     const startDate = new Date(today);
     startDate.setDate(today.getDate() - 15);
@@ -208,7 +192,6 @@ export function TimelineSlider(): TimelineSliderReturn {
     setDateRange({ startDate, endDate, totalHours });
   }, []);
 
-  // Don't render until we have the date range (client-side only)
   if (!dateRange) {
     return {
       timelineComponent: (
@@ -227,7 +210,6 @@ export function TimelineSlider(): TimelineSliderReturn {
 
   const { startDate, endDate, totalHours } = dateRange;
 
-  // Convert current selected time to slider value
   const currentValue = dateToSliderValue(timeline.selectedTime, startDate);
 
   const handleSliderChange = (values: number[]) => {
@@ -235,7 +217,6 @@ export function TimelineSlider(): TimelineSliderReturn {
       const newDate = sliderValueToDate(values[0], startDate);
       setSelectedTime(newDate);
 
-      // Update polygon colors based on the selected time
       console.log(
         `Timeline changed to: ${newDate.toISOString()}, updating polygon colors`
       );
@@ -244,9 +225,8 @@ export function TimelineSlider(): TimelineSliderReturn {
       const startTime = sliderValueToDate(values[0], startDate);
       const endTime = sliderValueToDate(values[1], startDate);
       setTimeRange(startTime, endTime);
-      setSelectedTime(startTime); // Set selected time to range start
+      setSelectedTime(startTime);
 
-      // Update polygon colors based on the range start time
       console.log(
         `Timeline range changed, updating polygon colors for: ${startTime.toISOString()}`
       );
@@ -258,11 +238,9 @@ export function TimelineSlider(): TimelineSliderReturn {
     timelineComponent: (
       <Card className="p-6">
         <div className="space-y-4">
-          {/* Mode Toggle */}
           <div className="flex items-center justify-between">
             <div className="text-xl font-semibold">MWV Dashboard</div>
             <div className="flex items-center gap-4">
-              {/* Mobile Hamburger Menu */}
               <Button
                 variant="outline"
                 size="sm"
@@ -273,7 +251,6 @@ export function TimelineSlider(): TimelineSliderReturn {
                 <span className="hidden sm:inline">Menu</span>
               </Button>
 
-              {/* Dark Mode Toggle */}
               <Button
                 variant="outline"
                 size="sm"
@@ -291,7 +268,6 @@ export function TimelineSlider(): TimelineSliderReturn {
                 )}
               </Button>
 
-              {/* Timeline Mode Toggle */}
               <div className="hidden sm:flex items-center gap-2">
                 <span className="text-sm font-medium">Timeline Mode:</span>
                 <Button
@@ -312,7 +288,6 @@ export function TimelineSlider(): TimelineSliderReturn {
             </div>
           </div>
 
-          {/* Mobile Timeline Mode Toggle */}
           <div className="sm:hidden flex items-center gap-2">
             <span className="text-sm font-medium">Timeline Mode:</span>
             <Button
@@ -331,7 +306,6 @@ export function TimelineSlider(): TimelineSliderReturn {
             </Button>
           </div>
 
-          {/* Timeline Slider */}
           <div className="px-2 py-4">
             {timeline.mode === "single" ? (
               <SliderWithTooltip
@@ -363,7 +337,6 @@ export function TimelineSlider(): TimelineSliderReturn {
             )}
           </div>
 
-          {/* Date Range Labels */}
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{formatDisplayDate(startDate)}</span>
             <span>Today</span>

@@ -19,7 +19,6 @@ export function PolygonList() {
     updatePolygon,
   } = useDashboardStore();
 
-  // State for editing polygon names
   const [editingNames, setEditingNames] = useState<Record<string, string>>({});
 
   const handleStartNameEdit = (polygon: any) => {
@@ -61,7 +60,6 @@ export function PolygonList() {
         label: "Temperature",
       };
     } else if (dataSourceId === "windspeed") {
-      // Use wind speed directly from weatherData since it's always available
       return {
         value: polygon.weatherData.windSpeed || 0,
         unit: " m/s",
@@ -117,7 +115,6 @@ export function PolygonList() {
         >
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              {/* Polygon Name */}
               <div className="flex items-center gap-2 mb-1">
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
@@ -143,7 +140,6 @@ export function PolygonList() {
                   </h4>
                 )}
               </div>{" "}
-              {/* Details */}
               <div className="space-y-1 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
@@ -154,7 +150,6 @@ export function PolygonList() {
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex flex-col gap-1">
               <Button
                 size="sm"
@@ -162,12 +157,10 @@ export function PolygonList() {
                 onClick={(e) => {
                   e.stopPropagation();
 
-                  // If currently editing and switching to save mode, save the name
                   if (editingPolygon === polygon.id) {
                     handleSaveNameEdit(polygon.id);
                     setEditingPolygon(undefined);
                   } else {
-                    // Entering edit mode - initialize name editing
                     handleStartNameEdit(polygon);
                     setEditingPolygon(polygon.id);
                   }
@@ -203,11 +196,9 @@ export function PolygonList() {
             </div>
           </div>
 
-          {/* Selected Polygon Details */}
           {selectedPolygon === polygon.id && (
             <div className="mt-3 pt-3 border-t text-xs">
               <div className="space-y-2">
-                {/* Weather Information */}
                 {polygon.weatherData && (
                   <div>
                     <span className="font-medium">Weather Data:</span>
@@ -258,7 +249,6 @@ export function PolygonList() {
                   </div>
                 )}
 
-                {/* Coordinates */}
                 <div>
                   <span className="font-medium">Coordinates:</span>
                   <div className="mt-1 max-h-20 overflow-y-auto text-muted-foreground">

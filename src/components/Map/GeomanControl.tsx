@@ -17,14 +17,12 @@ const Geoman = L.Control.extend({
   },
 
   onAdd(map: L.Map) {
-    // console.log("GeomanControl onAdd called, map.pm available:", !!map.pm);
 
     if (!map.pm) {
       console.error("Geoman not available on map");
-      return L.DomUtil.create("div"); // Return empty div if geoman not available
+      return L.DomUtil.create("div");
     }
 
-    // Add only polygon drawing controls
     map.pm.addControls({
       position: this.options.position,
       drawPolygon: true,
@@ -34,23 +32,19 @@ const Geoman = L.Control.extend({
       drawRectangle: false,
       drawCircle: false,
       drawText: false,
-      editMode: false, // Remove edit mode tool
+      editMode: false,
       dragMode: false,
       cutPolygon: false,
-      removalMode: false, // Remove removal mode tool
+      removalMode: false,
       rotateMode: false,
       oneBlock: true,
     });
 
-    // console.log("Geoman polygon-only controls added successfully");
-
-    // Return a container div (required by Leaflet Control)
     const container = L.DomUtil.create("div", "leaflet-control-geoman");
     return container;
   },
 
   onRemove(map: L.Map) {
-    // Cleanup when control is removed
     if (map.pm) {
       map.pm.removeControls();
     }

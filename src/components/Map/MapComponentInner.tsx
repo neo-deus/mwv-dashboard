@@ -18,7 +18,6 @@ export default function MapComponentInner() {
   const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    // Fix Leaflet default markers only on client side
     if (typeof window !== "undefined") {
       const setupLeaflet = async () => {
         try {
@@ -47,16 +46,13 @@ export default function MapComponentInner() {
     if (mapRef.current) {
       const mapInstance = mapRef.current;
 
-      // Store the actual map instance for components to use
       mapRef.current = mapInstance;
 
-      // Handle map movement
       mapInstance.on("moveend", () => {
         const center = mapInstance.getCenter();
         setMapCenter([center.lat, center.lng]);
       });
 
-      // Handle zoom changes
       mapInstance.on("zoomend", () => {
         setMapZoom(mapInstance.getZoom());
       });
@@ -78,19 +74,14 @@ export default function MapComponentInner() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
-        {/* Geoman Control (Polygon Only) */}
         <GeomanControl position="topright" />
 
-        {/* NEW: Geoman Controller for handling events */}
         <GeomanController />
 
-        {/* Map Controls */}
         <MapControls2 />
 
-        {/* Polygon Renderer - restores polygons from store on page load */}
         <PolygonRenderer />
 
-        {/* Polygon Color Updater - updates map colors when store changes */}
         <PolygonColorUpdater />
       </MapContainer>
     </div>

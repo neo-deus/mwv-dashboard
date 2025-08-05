@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 
-// Completely dynamic map to avoid any SSR issues
 const DynamicMapComponentInner = dynamic(() => import("./MapComponentInner"), {
   ssr: false,
   loading: () => (

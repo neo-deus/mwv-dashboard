@@ -67,6 +67,6 @@ export interface DashboardState {
   map: MapState;
   isDrawing: boolean;
   selectedPolygon?: string;
-  editingPolygon?: string; // ID of polygon currently being edited
-  activeDataSourceId: string; // ID of currently active data source
+  editingPolygon?: string;
+  activeDataSourceId: string;
 }

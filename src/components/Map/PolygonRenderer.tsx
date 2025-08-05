@@ -20,11 +20,8 @@ export function PolygonRenderer() {
   const layersRef = useRef<{ [key: string]: L.Polygon }>({});
   const map = useMap();
 
-  // Effect to sync Leaflet layers with the Zustand store
   useEffect(() => {
-    // console.log("PolygonRenderer: Syncing polygons", polygons.length);
 
-    // Get all existing layers that are managed by Geoman (freshly created)
     const existingGeomanLayers: string[] = [];
     map.eachLayer((layer: any) => {
       if (
@@ -33,18 +30,12 @@ export function PolygonRenderer() {
         (layer as any).isCustomPolygon
       ) {
         existingGeomanLayers.push((layer as any)._polygonId);
-        // console.log(
-        //   `Found existing Geoman layer for polygon: ${
-        //     (layer as any)._polygonId
-        //   }`
-        // );
       }
     });
 
     const currentLayerIds = Object.keys(layersRef.current);
     const polygonIds = polygons.map((p) => p.id);
 
-    // Remove layers that are no longer in the store
     currentLayerIds.forEach((layerId) => {
       if (!polygonIds.includes(layerId)) {
         console.log(`PolygonRenderer: Removing layer ${layerId}`);
@@ -56,31 +47,24 @@ export function PolygonRenderer() {
       }
     });
 
-    // Add layers ONLY for polygons that don't already exist as Geoman layers
     polygons.forEach((polygon) => {
       const existingLayer = layersRef.current[polygon.id];
       const hasGeomanLayer = existingGeomanLayers.includes(polygon.id);
 
       if (!existingLayer && !hasGeomanLayer) {
-        // console.log(
-        //   `PolygonRenderer: Creating restoration layer for ${polygon.id} (${polygon.name})`
-        // );
-
-        // Create coordinates (remove the last duplicate point if it exists)
         let coordinates = [...polygon.coordinates];
         if (
           coordinates.length > 1 &&
           coordinates[0][0] === coordinates[coordinates.length - 1][0] &&
           coordinates[0][1] === coordinates[coordinates.length - 1][1]
         ) {
-          coordinates = coordinates.slice(0, -1); // Remove duplicate last point
+          coordinates = coordinates.slice(0, -1);
         }
 
         const latLngs = coordinates.map(
           (coord) => [coord[0], coord[1]] as [number, number]
         );
 
-        // Check if we need to refresh weather data for this polygon
         const activeDataSource = dataSources.find(
           (ds) => ds.id === activeDataSourceId
         );
@@ -93,19 +77,12 @@ export function PolygonRenderer() {
                 );
               }
 
-              if (refreshedPolygon.timeSeriesData) {
-                // console.log(
-                //   `Refreshed time series data for ${polygon.name}: ${refreshedPolygon.timeSeriesData.data.length} data points`
-                // );
-              }
-
               updatePolygon(polygon.id, {
                 color: refreshedPolygon.color,
                 weatherData: refreshedPolygon.weatherData,
                 timeSeriesData: refreshedPolygon.timeSeriesData,
               });
 
-              // Update the layer color if it exists
               const existingLayer = layersRef.current[polygon.id];
               if (existingLayer) {
                 existingLayer.setStyle({
@@ -131,19 +108,16 @@ export function PolygonRenderer() {
           weight: 2,
         }).addTo(map);
 
-        // Enable editing only if this polygon is being edited
         if (editingPolygon === polygon.id) {
           polygonLayer.pm.enable();
         } else {
           polygonLayer.pm.disable();
         }
 
-        // Mark this layer with our polygon ID and custom flag
         (polygonLayer as any)._polygonId = polygon.id;
         (polygonLayer as any).isCustomPolygon = true;
-        (polygonLayer as any).restoredFromStore = true; // Mark as restored
+        (polygonLayer as any).restoredFromStore = true;
 
-        // Add edit handler for this restored polygon (Lovable's approach)
         polygonLayer.on("pm:edit", () => {
           console.log(
             `🔥 PolygonRenderer: Edit event on restored polygon ${polygon.id}`
@@ -154,12 +128,10 @@ export function PolygonRenderer() {
             coord.lng,
           ]);
 
-          // Close the polygon by adding the first point at the end for proper polygon storage
           if (coords.length > 0) {
             coords.push(coords[0]);
           }
 
-          // Update store using the correct updatePolygon signature for your store
           const { updatePolygon } = useDashboardStore.getState();
           updatePolygon(polygon.id, {
             coordinates: coords,
@@ -171,7 +143,6 @@ export function PolygonRenderer() {
           );
         });
 
-        // Add additional event handlers for vertex dragging (like Lovable does)
         polygonLayer.on("pm:markerdragend", () => {
           console.log(
             `🔥 PolygonRenderer: Vertex drag ended on polygon ${polygon.id}`
@@ -197,7 +168,6 @@ export function PolygonRenderer() {
           );
         });
 
-        // Helper function to get weather display info
         const getWeatherDisplayInfo = (polygon: any) => {
           if (!polygon.weatherData) return null;
 
@@ -213,7 +183,6 @@ export function PolygonRenderer() {
               unit: "°C",
             };
           } else if (polygon.dataSource === "windspeed") {
-            // Get wind speed from time series data if available
             if (
               polygon.timeSeriesData &&
               polygon.timeSeriesData.data.length > 0
@@ -250,7 +219,6 @@ export function PolygonRenderer() {
             };
           }
 
-          // Fallback to temperature
           return {
             label: "Temperature",
             value: polygon.weatherData.temperature.toFixed(1),
@@ -258,7 +226,6 @@ export function PolygonRenderer() {
           };
         };
 
-        // Add popup with polygon info including weather data
         const weatherDisplayInfo = getWeatherDisplayInfo(polygon);
         const weatherInfo =
           weatherDisplayInfo && polygon.weatherData
@@ -292,21 +259,14 @@ export function PolygonRenderer() {
           </div>
         `);
 
-        // Handle polygon selection
         polygonLayer.on("click", () => {
           setSelectedPolygon(polygon.id);
         });
 
-        // Store reference
         layersRef.current[polygon.id] = polygonLayer;
 
-        // console.log(
-        //   `✅ Restored polygon ${polygon.id} with ${coordinates.length} points and color ${polygon.color}`
-        // );
       } else if (hasGeomanLayer) {
-        // console.log(
-        //   `PolygonRenderer: Skipping ${polygon.id} - already managed by Geoman`
-        // );
+
       }
     });
   }, [
@@ -320,7 +280,6 @@ export function PolygonRenderer() {
     activeDataSourceId,
   ]);
 
-  // Set up global delete function
   useEffect(() => {
     (window as any).deletePolygon = (id: string) => {
       console.log(`PolygonRenderer: Deleting polygon ${id}`);
@@ -332,5 +291,5 @@ export function PolygonRenderer() {
     };
   }, [removePolygon]);
 
-  return null; // This component renders through Leaflet directly
+  return null;
 }

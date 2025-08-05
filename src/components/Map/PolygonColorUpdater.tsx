@@ -15,7 +15,6 @@ export function PolygonColorUpdater() {
   useEffect(() => {
     if (!map) return;
 
-    // Update all polygon layer colors when polygons change
     map.eachLayer((layer: any) => {
       if (
         layer instanceof L.Polygon &&
@@ -26,7 +25,6 @@ export function PolygonColorUpdater() {
         const polygon = polygons.find((p) => p.id === polygonId);
 
         if (polygon) {
-          // Update layer style to match the current polygon color
           layer.setStyle({
             color: polygon.color,
             fillColor: polygon.color,
@@ -34,9 +32,7 @@ export function PolygonColorUpdater() {
             weight: 2,
           });
 
-          // Update popup content if it exists and has weather data
           if (polygon.weatherData) {
-            // Generate weather info based on active data source
             const activeDataSource = dataSources.find(
               (ds) => ds.id === activeDataSourceId
             );
@@ -50,7 +46,6 @@ export function PolygonColorUpdater() {
               weatherDisplayValue = polygon.weatherData.windSpeed.toFixed(1);
               weatherUnit = " m/s";
             } else {
-              // Fallback to temperature if data source is unknown
               weatherDisplayValue = polygon.weatherData.temperature.toFixed(1);
               weatherUnit = "°C";
             }
@@ -89,14 +84,10 @@ export function PolygonColorUpdater() {
               popup.setContent(updatedContent);
             }
           }
-
-          // console.log(
-          //   `Updated layer color for polygon ${polygonId} to ${polygon.color}`
-          // );
         }
       }
     });
   }, [polygons, map]);
 
-  return null; // This component only handles side effects
+  return null;
 }

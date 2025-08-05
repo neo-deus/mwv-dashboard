@@ -44,13 +44,13 @@ interface DashboardStore extends DashboardState {
 
 // Default values
 const defaultMapState: MapState = {
-  center: [52.52, 13.41], // Berlin coordinates as default
+  center: [52.52, 13.41], // Berlin
   zoom: 10,
 };
 
 const defaultTimelineState: TimelineState = {
   mode: "single",
-  selectedTime: null as any, // Will be set on client side
+  selectedTime: null as any,
 };
 
 const defaultDataSource: DataSource = {
@@ -58,9 +58,9 @@ const defaultDataSource: DataSource = {
   name: "Temperature",
   field: "temperature_2m",
   rules: [
-    { id: "1", operator: "<", value: 10, color: "#3b82f6" }, // Blue for cold
-    { id: "2", operator: ">=", value: 10, color: "#22c55e" }, // Green for moderate
-    { id: "3", operator: ">=", value: 25, color: "#ef4444" }, // Red for hot
+    { id: "1", operator: "<", value: 10, color: "#3b82f6" },
+    { id: "2", operator: ">=", value: 10, color: "#22c55e" },
+    { id: "3", operator: ">=", value: 25, color: "#ef4444" },
   ],
 };
 
@@ -69,9 +69,9 @@ const windSpeedDataSource: DataSource = {
   name: "Wind Speed",
   field: "windspeed_10m",
   rules: [
-    { id: "1", operator: "<", value: 10, color: "#10b981" }, // Green for light wind (< 10 km/h)
-    { id: "2", operator: ">=", value: 10, color: "#f59e0b" }, // Orange for moderate wind (10-14 km/h)
-    { id: "3", operator: ">=", value: 15, color: "#ef4444" }, // Red for strong wind (≥ 15 km/h)
+    { id: "1", operator: "<", value: 10, color: "#10b981" },
+    { id: "2", operator: ">=", value: 10, color: "#f59e0b" },
+    { id: "3", operator: ">=", value: 15, color: "#ef4444" },
   ],
 };
 
@@ -82,7 +82,7 @@ const initialState: DashboardState = {
   map: defaultMapState,
   isDrawing: false,
   editingPolygon: undefined,
-  activeDataSourceId: "temperature", // Default to temperature
+  activeDataSourceId: "temperature",
 };
 
 export const useDashboardStore = create<DashboardStore>()(
@@ -158,14 +158,12 @@ export const useDashboardStore = create<DashboardStore>()(
             }
 
             const updatedPolygons = state.polygons.map((polygon) => {
-              // Update ALL polygons with time series data, regardless of their original data source
               if (polygon.timeSeriesData) {
                 const updatedPolygon = updatePolygonColorForTime(
                   polygon,
                   targetTime,
                   activeDataSource
                 );
-                // Also update the polygon's dataSource to match the active one
                 return {
                   ...updatedPolygon,
                   dataSource: state.activeDataSourceId,
@@ -179,7 +177,6 @@ export const useDashboardStore = create<DashboardStore>()(
             };
           }),
 
-        // Data source actions
         addDataSource: (dataSource) =>
           set((state) => ({
             dataSources: [
@@ -208,12 +205,10 @@ export const useDashboardStore = create<DashboardStore>()(
             );
             console.log(`📊 Data source details:`, newDataSource);
 
-            // Update colors for all polygons based on new data source
             if (newDataSource && state.timeline.selectedTime) {
               console.log(
                 `🎨 Updating all polygon colors for new data source: ${dataSourceId}`
               );
-              // This will be handled by the useEffect in DataSourceSidebar
             }
 
             return {
@@ -247,7 +242,6 @@ export const useDashboardStore = create<DashboardStore>()(
         // Migration actions
         migrateDataSources: () =>
           set((state) => {
-            // Check if wind speed data source exists
             const hasWindSpeed = state.dataSources.some(
               (ds) => ds.id === "windspeed"
             );

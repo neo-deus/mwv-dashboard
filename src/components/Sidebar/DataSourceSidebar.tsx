@@ -24,41 +24,24 @@ export function DataSourceSidebar({ onClose }: DataSourceSidebarProps) {
     timeline,
   } = useDashboardStore();
 
-  // Log current active data source for debugging
-  // console.log(
-  //   `🎯 DataSourceSidebar - Current active data source: ${activeDataSourceId}`
-  // );
 
   const [activeTab, setActiveTab] = useState<"polygons" | "rules" | "sources">(
     "polygons"
   );
 
-  // Refresh polygon colors when active data source changes
   useEffect(() => {
-    // console.log(
-    //   `🔄 Active data source changed, refreshing polygon colors for: ${activeDataSourceId}`
-    // );
-
-    // Update colors based on timeline and new data source
     if (timeline.selectedTime) {
-      // console.log(
-      //   `🎨 Updating polygon colors for timeline: ${timeline.selectedTime.toISOString()}`
-      // );
       updatePolygonColorsForTime(timeline.selectedTime);
     } else {
-      // console.log(`⏰ No timeline selected, using current time`);
-      // If no timeline is selected, use current time
       updatePolygonColorsForTime(new Date());
     }
   }, [activeDataSourceId, timeline.selectedTime, updatePolygonColorsForTime]);
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Dashboard Controls</h2>
-          {/* Mobile close button */}
           {onClose && (
             <Button
               variant="ghost"
@@ -71,7 +54,6 @@ export function DataSourceSidebar({ onClose }: DataSourceSidebarProps) {
           )}
         </div>
 
-        {/* Tab Navigation */}
         <div className="flex gap-1 mt-3">
           <Button
             variant={activeTab === "polygons" ? "default" : "ghost"}
@@ -103,7 +85,6 @@ export function DataSourceSidebar({ onClose }: DataSourceSidebarProps) {
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === "polygons" && (
           <div className="space-y-4">
@@ -185,39 +166,16 @@ export function DataSourceSidebar({ onClose }: DataSourceSidebarProps) {
                         </span>
                       )}
                     </div>
-                    {/* <span className="text-xs text-muted-foreground">
-                      {source.field}
-                    </span> */}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {source.rules.length} color rules defined
                   </div>
                 </div>
               ))}
-
-              {/* Debug/Migration Button */}
-              {/* <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => {
-                  localStorage.removeItem("mwv-dashboard-store");
-                  window.location.reload();
-                }}
-              >
-                🔄 Reset to Defaults (Debug)
-              </Button> */}
             </Card>
           </div>
         )}
       </div>
-
-      {/* Footer */}
-      {/* <div className="p-4 border-t bg-muted/50">
-        <div className="text-xs text-muted-foreground text-center">
-          MWV Weather Dashboard v1.0
-        </div>
-      </div> */}
     </div>
   );
 }

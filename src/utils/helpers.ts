@@ -1,10 +1,8 @@
 import type { ColorRule } from "@/types";
 
-/**
- * Apply color rules to determine polygon color based on data value
- */
+
 export function applyColorRules(value: number, rules: ColorRule[]): string {
-  // Sort rules by value to apply them in correct order
+
   const sortedRules = rules.sort((a, b) => a.value - b.value);
 
   for (const rule of sortedRules) {
@@ -27,13 +25,10 @@ export function applyColorRules(value: number, rules: ColorRule[]): string {
     }
   }
 
-  // Default color if no rules match
-  return "#9ca3af"; // gray-400
+  return "#9ca3af";
 }
 
-/**
- * Generate timeline hours for the date range
- */
+
 export function generateTimelineHours(startDate: Date, endDate: Date): Date[] {
   const hours: Date[] = [];
   const current = new Date(startDate);
@@ -46,14 +41,10 @@ export function generateTimelineHours(startDate: Date, endDate: Date): Date[] {
   return hours;
 }
 
-/**
- * Format date for display
- */
+
 export function formatDisplayDate(date: Date | string): string {
-  // Convert string to Date if needed (for rehydrated data from localStorage)
   const dateObj = typeof date === "string" ? new Date(date) : date;
 
-  // Check if it's a valid date
   if (isNaN(dateObj.getTime())) {
     return "Invalid Date";
   }
@@ -66,9 +57,6 @@ export function formatDisplayDate(date: Date | string): string {
   });
 }
 
-/**
- * Calculate bounding box for polygon coordinates
- */
 export function calculateBoundingBox(
   coordinates: [number, number][]
 ): [[number, number], [number, number]] {
@@ -93,9 +81,7 @@ export function calculateBoundingBox(
   ];
 }
 
-/**
- * Validate polygon coordinates
- */
+
 export function validatePolygon(coordinates: [number, number][]): {
   isValid: boolean;
   error?: string;
@@ -108,7 +94,6 @@ export function validatePolygon(coordinates: [number, number][]): {
     return { isValid: false, error: "Polygon cannot have more than 12 points" };
   }
 
-  // Check if first and last points are the same (closed polygon)
   const first = coordinates[0];
   const last = coordinates[coordinates.length - 1];
 
@@ -122,14 +107,10 @@ export function validatePolygon(coordinates: [number, number][]): {
   return { isValid: true };
 }
 
-/**
- * Convert timeline slider value to date
- */
 export function sliderValueToDate(
   value: number,
   startDate: Date | string
 ): Date {
-  // Ensure startDate is a Date object (handle string dates from persistence)
   const startDateObj =
     startDate instanceof Date ? startDate : new Date(startDate);
   const date = new Date(startDateObj);
@@ -137,14 +118,10 @@ export function sliderValueToDate(
   return date;
 }
 
-/**
- * Convert date to timeline slider value
- */
 export function dateToSliderValue(
   date: Date | string,
   startDate: Date
 ): number {
-  // Ensure date is a Date object (handle string dates from persistence)
   const dateObj = date instanceof Date ? date : new Date(date);
   const startDateObj =
     startDate instanceof Date ? startDate : new Date(startDate);
@@ -154,9 +131,6 @@ export function dateToSliderValue(
   );
 }
 
-/**
- * Debounce function for performance optimization
- */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number

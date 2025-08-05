@@ -161,12 +161,12 @@ export async function refreshPolygonWeatherIfStale(
   includeTimeSeries: boolean = true
 ): Promise<Polygon> {
   // Temporarily commented out for debugging - always refresh
-  // if (!forceRefresh && !isWeatherDataStale(polygon.weatherData)) {
-  //   console.log(
-  //     `Weather data for polygon ${polygon.name} is still fresh, skipping refresh`
-  //   );
-  //   return polygon;
-  // }
+  if (!forceRefresh && !isWeatherDataStale(polygon.weatherData)) {
+    console.log(
+      `Weather data for polygon ${polygon.name} is still fresh, skipping refresh`
+    );
+    return polygon;
+  }
 
   console.log(`🔄 Refreshing weather data for polygon ${polygon.name}`);
 
