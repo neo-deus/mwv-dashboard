@@ -45,7 +45,7 @@ interface DashboardStore extends DashboardState {
 
 // Default values
 const defaultMapState: MapState = {
-  center: [52.52, 13.41], // Berlin
+  center: [22.69, 88.47], // Madhyamgram, Kolkata
   zoom: getZoomLevelFor2SqKm(), // Zoom level for 2 sq km resolution
 };
 

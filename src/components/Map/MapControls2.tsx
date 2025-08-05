@@ -11,7 +11,7 @@ export default function MapControls() {
   const { setIsDrawing } = useDashboardStore();
 
   const handleCenterReset = () => {
-    const defaultCenter: [number, number] = [52.52, 13.41]; // Berlin
+    const defaultCenter: [number, number] = [22.69, 88.47]; // Madhyamgram, Kolkata
     const defaultZoom = getZoomLevelFor2SqKm(); // 2 sq km resolution
     map.setView(defaultCenter, defaultZoom);
   };

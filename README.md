@@ -1,36 +1,203 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MWV Weather Dashboard
 
-## Getting Started
+A modern, interactive weather visualization dashboard for analyzing temperature and wind speed data across custom-drawn polygons. Built with Next.js, TypeScript, and Leaflet.
 
-First, run the development server:
+## 🌐 Live Demo
+
+**[https://mwv-dashboard-kxar.vercel.app/](https://mwv-dashboard-kxar.vercel.app/)**
+
+## 📋 Features
+
+- **Interactive Map**: Draw custom polygons on an OpenStreetMap interface
+- **Dual Data Sources**: Toggle between Temperature and Wind Speed visualizations
+- **Dynamic Color Coding**: Visual representation based on configurable rules
+- **Timeline Control**: Navigate through hourly weather data with intuitive slider
+- **Real-time Weather Data**: Powered by Open-Meteo API
+- **Responsive Design**: Mobile-first approach with hamburger menu navigation
+- **Dark Mode**: Complete theming system with localStorage persistence
+- **Polygon Management**: Create, edit, rename, and delete weather analysis areas
+- **Default Resolution**: Map loads at 2 sq km zoom level for optimal analysis
+
+## 🚀 Setup and Run Instructions
+
+### Prerequisites
+
+- Node.js 18+
+- npm, yarn, pnpm, or bun package manager
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/neo-deus/mwv-dashboard.git
+   cd mwv-dashboard
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   # or
+   bun install
+   ```
+
+3. **Run the development server**
+
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
+   # or
+   bun dev
+   ```
+
+4. **Open the application**
+
+   Navigate to [http://localhost:3000](http://localhost:3000) in your browser
+
+### Build for Production
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Linting and Type Checking
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npm run build  # Includes type checking
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📚 Libraries and Technologies Used
 
-## Learn More
+### Core Framework
 
-To learn more about Next.js, take a look at the following resources:
+- **Next.js 15.4.5** - React framework with app router and server-side rendering
+- **React 19** - UI library with modern hooks and concurrent features
+- **TypeScript** - Type-safe development with strict configurations
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### State Management
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Zustand 5.0.2** - Lightweight state management with persistence middleware
+- **@tanstack/react-query 5.62.2** - Server state management and caching
 
-## Deploy on Vercel
+### Mapping and Visualization
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Leaflet 1.9.4** - Interactive map library
+- **React-Leaflet 4.2.1** - React components for Leaflet
+- **Leaflet-Geoman 2.17.0** - Advanced polygon drawing and editing tools
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### UI Components and Styling
+
+- **Tailwind CSS 3.4.1** - Utility-first CSS framework
+- **Radix UI** - Accessible, unstyled UI primitives
+  - @radix-ui/react-slider - Timeline control component
+  - @radix-ui/react-select - Dropdown selections
+- **Lucide React 0.468.0** - Modern icon library
+- **clsx & tailwind-merge** - Conditional CSS class utilities
+
+### Weather Data
+
+- **Open-Meteo API** - Free weather API providing temperature and wind speed data
+
+### Development Tools
+
+- **ESLint** - Code linting with Next.js configuration
+- **PostCSS** - CSS processing and Tailwind integration
+
+## 🏗️ Design and Development Remarks
+
+### Architecture Decisions
+
+1. **State Management Strategy**
+
+   - Zustand chosen for its simplicity and TypeScript support
+   - Persistence middleware ensures data survives page refreshes
+   - Centralized store with clear action patterns
+
+2. **Map Implementation**
+
+   - Dynamic imports to avoid SSR issues with Leaflet
+   - Dual polygon management: Geoman for creation, custom renderer for persistence
+   - Efficient layer cleanup to prevent memory leaks
+
+3. **Weather Data Flow**
+
+   - Cached API responses with 30-minute staleness check
+   - Batch processing for multiple polygons
+   - Error handling with retry logic
+
+4. **Component Architecture**
+   - Modular design with clear separation of concerns
+   - Custom hooks for complex state logic
+   - Reusable UI components with Radix primitives
+
+### Technical Highlights
+
+- **Performance**: Optimized bundle with dynamic imports and code splitting
+- **Accessibility**: ARIA-compliant components with keyboard navigation
+- **Responsive**: Mobile-first design with progressive enhancement
+- **Type Safety**: Comprehensive TypeScript coverage with strict mode
+- **Error Boundaries**: Graceful degradation for API failures
+
+### Development Challenges Solved
+
+1. **SSR Compatibility**: Leaflet requires client-side only rendering
+2. **Polygon Synchronization**: Managing both Geoman and custom layers
+3. **Timeline Performance**: Efficient date calculations for large datasets
+4. **Mobile Experience**: Responsive design with touch-friendly controls
+
+## 📸 Screenshots
+
+<!-- Add application screenshots here -->
+<!--
+![Dashboard Overview](./screenshots/dashboard-overview.png)
+*Main dashboard with temperature visualization*
+
+![Polygon Creation](./screenshots/polygon-creation.png)
+*Interactive polygon drawing interface*
+
+![Timeline Control](./screenshots/timeline-control.png)
+*Hourly weather data navigation*
+
+![Mobile View](./screenshots/mobile-view.png)
+*Responsive mobile interface*
+
+![Dark Mode](./screenshots/dark-mode.png)
+*Complete dark theme implementation*
+-->
+
+_Screenshots will be added soon_
+
+## 🎯 Assignment Requirements Fulfilled
+
+- ✅ Interactive map with polygon drawing capabilities
+- ✅ Weather data integration with real-time API
+- ✅ Dual data source support (Temperature & Wind Speed)
+- ✅ Timeline control for temporal data navigation
+- ✅ Dynamic color coding based on weather parameters
+- ✅ Responsive design for multiple screen sizes
+- ✅ Default 2 sq km resolution for optimal analysis
+- ✅ Modern tech stack with TypeScript and Next.js
+
+## 🚀 Deployment
+
+The application is deployed on Vercel with automatic deployments from the main branch.
+
+**Live URL**: [https://mwv-dashboard-kxar.vercel.app/](https://mwv-dashboard-kxar.vercel.app/)
+
+## 📄 License
+
+This project is developed as part of an assignment for MWV (Meteorologischer Wetterdienst Verein).
+
+---
+
+_Built with ❤️ using Next.js and modern web technologies_
