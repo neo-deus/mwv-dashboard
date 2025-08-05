@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { updatePolygonColorForTime } from "@/services/polygonWeatherService";
+import { getZoomLevelFor2SqKm } from "@/utils/polygonUtils";
 import type {
   DashboardState,
   Polygon,
@@ -45,7 +46,7 @@ interface DashboardStore extends DashboardState {
 // Default values
 const defaultMapState: MapState = {
   center: [52.52, 13.41], // Berlin
-  zoom: 10,
+  zoom: getZoomLevelFor2SqKm(), // Zoom level for 2 sq km resolution
 };
 
 const defaultTimelineState: TimelineState = {

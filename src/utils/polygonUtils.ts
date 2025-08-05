@@ -45,7 +45,6 @@ export function calculatePolygonCentroid(
   return [centroidLat, centroidLng];
 }
 
-
 export function calculateBoundingBoxCenter(
   coordinates: [number, number][]
 ): [number, number] {
@@ -62,4 +61,16 @@ export function calculateBoundingBoxCenter(
   const maxLng = Math.max(...lngs);
 
   return [(minLat + maxLat) / 2, (minLng + maxLng) / 2];
+}
+
+/**
+ * Calculate the appropriate zoom level to show approximately 2 sq km area
+ * For Leaflet maps, higher zoom = more detailed view
+ * Zoom level 16-17 typically shows ~2 sq km at mid-latitudes
+ * @returns Zoom level for 2 sq km resolution
+ */
+export function getZoomLevelFor2SqKm(): number {
+  // Zoom level 16 shows approximately 2-3 sq km depending on latitude
+  // This provides a good default resolution for weather analysis
+  return 16;
 }

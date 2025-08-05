@@ -3,6 +3,7 @@
 import { useMap } from "react-leaflet";
 import { Button } from "@/components/ui/button";
 import { useDashboardStore } from "@/stores/dashboardStore";
+import { getZoomLevelFor2SqKm } from "@/utils/polygonUtils";
 import { Home } from "lucide-react";
 
 export default function MapControls() {
@@ -11,7 +12,7 @@ export default function MapControls() {
 
   const handleCenterReset = () => {
     const defaultCenter: [number, number] = [52.52, 13.41]; // Berlin
-    const defaultZoom = 10;
+    const defaultZoom = getZoomLevelFor2SqKm(); // 2 sq km resolution
     map.setView(defaultCenter, defaultZoom);
   };
 

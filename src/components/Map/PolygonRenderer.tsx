@@ -21,7 +21,6 @@ export function PolygonRenderer() {
   const map = useMap();
 
   useEffect(() => {
-
     const existingGeomanLayers: string[] = [];
     map.eachLayer((layer: any) => {
       if (
@@ -36,6 +35,7 @@ export function PolygonRenderer() {
     const currentLayerIds = Object.keys(layersRef.current);
     const polygonIds = polygons.map((p) => p.id);
 
+    // Remove layers from layersRef that no longer exist in store
     currentLayerIds.forEach((layerId) => {
       if (!polygonIds.includes(layerId)) {
         console.log(`PolygonRenderer: Removing layer ${layerId}`);
@@ -44,6 +44,24 @@ export function PolygonRenderer() {
           map.removeLayer(layer);
         }
         delete layersRef.current[layerId];
+      }
+    });
+
+    // Also remove Geoman layers that are no longer in the store
+    // This handles the case where a newly created polygon is deleted before page refresh
+    map.eachLayer((layer: any) => {
+      if (
+        layer instanceof L.Polygon &&
+        (layer as any)._polygonId &&
+        (layer as any).isCustomPolygon &&
+        !polygonIds.includes((layer as any)._polygonId)
+      ) {
+        console.log(
+          `PolygonRenderer: Removing orphaned Geoman layer ${
+            (layer as any)._polygonId
+          }`
+        );
+        map.removeLayer(layer);
       }
     });
 
@@ -264,9 +282,7 @@ export function PolygonRenderer() {
         });
 
         layersRef.current[polygon.id] = polygonLayer;
-
       } else if (hasGeomanLayer) {
-
       }
     });
   }, [
