@@ -49,8 +49,8 @@ export function PolygonNameModal({
               Name Your Polygon
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              You've created a polygon with {vertexCount} vertices. Please give
-              it a name.
+              You&apos;ve created a polygon with {vertexCount} vertices. Please
+              give it a name.
             </p>
           </div>
 

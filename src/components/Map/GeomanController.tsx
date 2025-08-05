@@ -436,6 +436,7 @@ export function GeomanController() {
     dataSources,
     timeline,
     activeDataSourceId,
+    handleEdit,
   ]);
 
   // Separate effect to handle editing state changes

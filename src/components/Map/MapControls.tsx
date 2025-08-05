@@ -10,8 +10,13 @@ interface MapControlsProps {
 }
 
 export function MapControls({ mapRef }: MapControlsProps) {
-  const { isDrawing, setIsDrawing, map, setMapCenter, setMapZoom } =
-    useDashboardStore();
+  const {
+    isDrawing,
+    setIsDrawing,
+    map: _map,
+    setMapCenter,
+    setMapZoom,
+  } = useDashboardStore();
 
   const handleCenterReset = () => {
     if (mapRef.current) {

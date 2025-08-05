@@ -13,11 +13,28 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
-      // Relax some TypeScript rules for better compatibility with third-party libraries
-      "@typescript-eslint/no-explicit-any": "warn", // Change from error to warning
-      "@typescript-eslint/no-unused-vars": "warn", // Change from error to warning
-      "prefer-const": "warn", // Change from error to warning
-      "react-hooks/exhaustive-deps": "warn", // Change from error to warning
+      // Disable warnings about 'any' types - often necessary for third-party libraries
+      "@typescript-eslint/no-explicit-any": "off",
+
+      // Disable warnings about unused variables with underscore prefix
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+
+      // Allow React Hook dependencies to be managed manually when necessary
+      "react-hooks/exhaustive-deps": "warn",
+
+      // Allow unescaped entities in JSX (for apostrophes, quotes, etc.)
+      "react/no-unescaped-entities": "off",
+
+      // Allow prefer-const warnings
+      "prefer-const": "warn",
     },
   },
 ];

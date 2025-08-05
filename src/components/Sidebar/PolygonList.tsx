@@ -16,7 +16,6 @@ export function PolygonList() {
     dataSources,
     editingPolygon,
     setEditingPolygon,
-    activeDataSourceId,
     updatePolygon,
   } = useDashboardStore();
 
@@ -43,14 +42,7 @@ export function PolygonList() {
       updatePolygon(polygonId, { name: newName.trim() });
     }
     setEditingNames((prev) => {
-      const { [polygonId]: _, ...rest } = prev;
-      return rest;
-    });
-  };
-
-  const handleCancelNameEdit = (polygonId: string) => {
-    setEditingNames((prev) => {
-      const { [polygonId]: _, ...rest } = prev;
+      const { [polygonId]: _removed, ...rest } = prev;
       return rest;
     });
   };
