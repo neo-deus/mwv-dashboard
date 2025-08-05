@@ -6,6 +6,11 @@ A modern, interactive weather visualization dashboard for analyzing temperature 
 
 **[https://mwv-dashboard-kxar.vercel.app/](https://mwv-dashboard-kxar.vercel.app/)**
 
+## Github Repository
+
+**[https://github.com/neo-deus/mwv-dashboard](https://github.com/neo-deus/mwv-dashboard)**
+
+
 ## 📋 Features
 
 - **Interactive Map**: Draw custom polygons on an OpenStreetMap interface
@@ -157,25 +162,21 @@ npm run build  # Includes type checking
 
 ## 📸 Screenshots
 
-<!-- Add application screenshots here -->
-<!--
-![Dashboard Overview](./screenshots/dashboard-overview.png)
+![Dashboard Overview](./public/screenshots/Homepage.png)
 *Main dashboard with temperature visualization*
 
-![Polygon Creation](./screenshots/polygon-creation.png)
+![Polygon Creation](./public/screenshots/polygons.png)
 *Interactive polygon drawing interface*
 
-![Timeline Control](./screenshots/timeline-control.png)
-*Hourly weather data navigation*
+![Different Datasources](./public/screenshots/DataSources.png)
+*Toggle between temperature and wind speed data*]
 
-![Mobile View](./screenshots/mobile-view.png)
+<p align="center">
+  <img src="./public/screenshots/Mobile1.jpeg" alt="Mobile View" width="250" />
+  <img src="./public/screenshots/Mobile2.jpeg" alt="Mobile View 2" width="250" />
+</p>
 *Responsive mobile interface*
 
-![Dark Mode](./screenshots/dark-mode.png)
-*Complete dark theme implementation*
--->
-
-_Screenshots will be added soon_
 
 ## 🎯 Assignment Requirements Fulfilled
 
