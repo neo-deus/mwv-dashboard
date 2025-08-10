@@ -92,7 +92,6 @@ npm run build  # Includes type checking
 ### State Management
 
 - **Zustand 5.0.2** - Lightweight state management with persistence middleware
-- **@tanstack/react-query 5.62.2** - Server state management and caching
 
 ### Mapping and Visualization
 
@@ -136,7 +135,6 @@ npm run build  # Includes type checking
 
 3. **Weather Data Flow**
 
-   - Cached API responses with 30-minute staleness check
    - Batch processing for multiple polygons
    - Error handling with retry logic
 
